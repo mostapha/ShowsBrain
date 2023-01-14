@@ -2,13 +2,11 @@
   "background_color": "purple",
   "description": "Shows random fox pictures. Hey, at least it isn't cats.",
   "display": "fullscreen",
-  "icons": [
-    {
-      "src": "images/brain-192.jpg",
+  "icons": [{
+      "src": "images/brain-192.png",
       "sizes": "192x192",
-      "type": "image/jpg"
-    }
-  ],
+      "type": "image/png"
+    }],
   "name": "Shows Brain",
   "short_name": "Brain",
   "start_url": "app.html"
