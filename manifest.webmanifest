@@ -9,5 +9,5 @@
     }],
   "name": "Shows Brain",
   "short_name": "Brain",
-  "start_url": "/ShowsBrain/app.html"
+  "start_url": "/ShowsBrain/index.html"
 }
