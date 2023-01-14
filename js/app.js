@@ -1,6 +1,10 @@
-
+console.log('check', "serviceWorker" in navigator);
 if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js");
+    console.log('register')
+    navigator.serviceWorker.register("sw.js")
+        .then(() => {
+            console.log('Service Worker Registered');
+        });
 }
 
 let deferredPrompt;
@@ -10,7 +14,6 @@ window.addEventListener('beforeinstallprompt', (e) => {
     // Stash the event so it can be triggered later.
     deferredPrompt = e;
 });
-
 
 
 $(document).on('submit', 'form', function (e) {
