@@ -1,5 +1,3 @@
-
-
 $(document).on('submit', 'form', function (e) {
     e.preventDefault();
     e.stopPropagation();
@@ -21,42 +19,12 @@ $(document).on('submit', 'form', function (e) {
 
 // load dexie
 let db;
-const imagesManager = (() => {
-    function serveImage(id) {
-    
-    }
-    
-    async function getImageFromDb(id) {
-        return await db.images.get({id: id}) === undefined
-    }
-    
-    function getImage(showId) {
-        getImageFromDb(showId).then(image => {
-            if (image) {
-                // serve image
-                console.log('image found');
-            } else {
-                console.log('image not found');
-                return undefined
-            }
-        })
-    }
-    
-    return {
-        getShowImage(id) {
-            return getImage('show_' + id);
-        },
-        getSeasonImage(id) {
-            return getImage('season_' + id);
-        },
-    }
-})();
-
 
 db = new Dexie("showsMemory");
-db.version(3).stores({
+db.version(1).stores({
     shows: "++id, type, status, userStatus, isFavorite",
-    images: "&id"
+    images: "&id",
+    seasons: "++id, showId"
 });
 
 console.log('works');
@@ -74,19 +42,52 @@ document.querySelector('.add-show').addEventListener('click', function () {
         
         let $showName = $t.find('#new-show-name'),
             $showAired = $t.find('#new-show-air-date'),
-            $showType = $t.find('#new-show-type');
+            $showType = $t.find('#new-show-type'),
+            $showSeasonsCount = $t.find('#new-show-seasons-count');
         
         $form.on('submit', function (e) {
-            db.shows.add({
-                name: $showName.val().trim(),
-                ...($showAired.val().trim() !== "" && {aired: new Date($showAired.val())}),
-                type: $showType.val(),
-                added: new Date()
-            }).then(() => {
-                self.Fragment.back();
-            }).catch(c => {
-                console.error(c);
+            
+            db.transaction('rw', db.shows, db.seasons, () => {
+                let dataAdded = {
+                    name: $showName.val().trim(),
+                    ...($showAired.val().trim() !== "" && {aired: new Date($showAired.val())}),
+                    type: $showType.val(),
+                    seasonsCount: parseInt($showSeasonsCount.val()),
+                    added: new Date()
+                };
+                
+                return db.shows.add(dataAdded).then(showId => {
+                    
+                    console.log('show added, now let\'s add seasons');
+                    
+                    let seasonsToAdd = Array(dataAdded.seasonsCount).fill().map((elem, index) => ({
+                        showId: showId,
+                        position: index + 1,
+                        added: new Date()
+                    }));
+                    
+                    console.log('seasonsToAdd', seasonsToAdd);
+                    
+                    db.seasons.bulkAdd(seasonsToAdd).then(n => {
+                        console.log('n', n);
+                        self.Fragment.back();
+    
+                        db.shows.get({id: showId}).then(show => {
+                            $('.show-list-inner').append(generateShowCard(show))
+                        });
+                        
+                    })
+                })
+                
+            }).then(n => {
+                console.log('all succeed', n);
+    
+                
+            }).catch(err => {
+                console.log('found errors');
+                console.error(err);
             })
+            
         })
     }, 'Add new show');
 });
@@ -101,12 +102,14 @@ Drawer.register('show-info', function (show) {
     $t.off().html(showViewer);
     let $posterImg = $t.find('.poster img');
     
+    let posterUrl;
     $posterImg.attr('data-poster', 'show-id-' + show.id);
     if (show.poster) {
         let objUrl = inflateAndGetObject(show.poster)
         $posterImg[0].onload = function () {
-            URL.revokeObjectURL(objUrl);
+            // URL.revokeObjectURL(objUrl);
         }
+        posterUrl = objUrl
         $posterImg[0].src = objUrl;
     }
     
@@ -256,19 +259,45 @@ Drawer.register('show-info', function (show) {
                     type: showType.val() === show.type ? false : showType.val(),
                     aired: new Date(showAired.val()).getTime() === show.aired.getTime() ? false : new Date(showAired.val()),
                     summary: showSummary.val().trim() === (show.summary ?? "") ? false : showSummary.val().trim(),
-                    seasonsCount: isNaN(parseInt(showSeasonsCount.val())) || parseInt(showSeasonsCount.val()) === show.seasonsCount ? false : parseInt(showSeasonsCount.val()),
+                    seasonsCount: isNaN(parseInt(showSeasonsCount.val())) || parseInt(showSeasonsCount.val()) === show.seasonsCount ? (showSeasonsCount.val().trim() === "" ? 0 : false) : parseInt(showSeasonsCount.val()),
                     status: showStatus.val() === (show.status ?? "") ? false : showStatus.val()
                 }
                 console.log(changes)
                 
                 let checkChanges = Object.entries(changes).filter(n => n[1] !== false);
                 if (checkChanges.length !== 0) {
-                    db.shows.where({id: show.id}).modify(_show => {
-                        checkChanges.forEach(n => {
-                            console.log(n[0], n[1]);
-                            _show[n[0]] = n[1];
-                        });
-                        console.log('final', _show);
+                    
+                    db.transaction('rw', db.shows, () => {
+                        return db.shows.where({id: show.id}).modify(_show => {
+                            checkChanges.forEach(n => {
+                                let key = n[0],
+                                    value = n[1];
+                                
+                                console.log(key, value);
+                                
+                                if (key === 'seasonsCount') {
+                                    console.log('old seasonsCount', show.seasonsCount);
+                                    if (value === 0) {
+                                        delete _show[key]
+                                    } else {
+                                        _show[key] = value;
+                                        // first time we add this
+                                        if (!show.seasonsCount) {
+                                            console.log(Array(value).fill().map(() => ({
+                                                showId: show.id,
+                                                added: new Date()
+                                            })));
+                                        } else {
+                                            console.log('already has seasons, handle it');
+                                        }
+                                    }
+                                } else {
+                                    _show[key] = value;
+                                }
+                                
+                            });
+                            console.log('final', _show);
+                        })
                     }).then(changes => {
                         if (changes === 1) {
                             db.shows.get({id: show.id}).then(show => {
@@ -283,12 +312,102 @@ Drawer.register('show-info', function (show) {
                                 Drawer.open('show-info', show);
                             })
                         }
-                    })
+                    }).catch(err => {
+                        
+                        // Transaction aborted. NOT WITHIN ZONE!
+                        console.log('err', err);
+                    });
+                    
                 } else {
                     console.log('no changes');
                 }
             });
         }, show.name);
+        
+    });
+    
+    $t.on('click', '#show-classify', function () {
+        // load mage
+        
+        // show edit fragment
+        Fragment.select('show-classifier').push(function () {
+            let $t = $(this);
+            $t.html(templates['classify-show'].cloneNode(1));
+            
+            let showUserStatus = $t.find('#edit-show-userStatus'),
+                showRating = $t.find('#edit-show-rating'),
+                showNotes = $t.find('#edit-show-notes');
+            
+            showUserStatus.val(show.userStatus ?? "");
+            showRating.val(show.rating ?? "");
+            showNotes.val(show.notes ?? "");
+            
+            
+            $t.find('#classify-show').submit(function () {
+                let changes = {
+                    userStatus: showUserStatus.val() === show.userStatus || (showUserStatus.val().trim() === "" && !show.userStatus) ? false : showUserStatus.val(),
+                    rating: isNaN(parseInt(showRating.val())) || parseInt(showRating.val()) === show.rating ? (showRating.val().trim() === "" && show.rating !== undefined ? 0 : false) : parseInt(showRating.val()),
+                    notes: showNotes.val().trim() === (show.notes ?? "") ? false : showNotes.val().trim(),
+                }
+                console.log(changes)
+                
+                let checkChanges = Object.entries(changes).filter(n => n[1] !== false);
+                if (checkChanges.length !== 0) {
+                    
+                    db.transaction('rw', db.shows, () => {
+                        return db.shows.where({id: show.id}).modify(_show => {
+                            checkChanges.forEach(n => {
+                                let key = n[0],
+                                    value = n[1];
+                                
+                                console.log(key, value);
+                                if ((key === "rating" && value === 0) || (key === "notes" && value === "")) {
+                                    delete _show[key]
+                                } else {
+                                    _show[key] = value;
+                                }
+                                
+                            });
+                            console.log('final', _show);
+                        })
+                    }).then(changes => {
+                        console.log('changes commit', changes);
+                        
+                        
+                        if(changes === 1){
+                            db.shows.get({id: show.id}).then(show => {
+                                $t.prop('Fragment').back();
+                                
+                                Drawer.open('show-info', show);
+                            })
+                        } else alert('unexpected results, changes is not 1');
+
+                        
+                    }).catch(err => {
+                        // Transaction aborted. NOT WITHIN ZONE!
+                        console.log('err', err);
+                    });
+                    
+                } else {
+                    console.log('no changes');
+                }
+            });
+            
+        }, show.name + "'s user preferences");
+        
+    });
+    
+    db.seasons.where({showId: show.id}).toArray().then(seasons => {
+        
+        console.log('seasons', seasons);
+        
+        let container = create('div', 'seasons hidden-scroll mx-n3 px-3');
+        seasons.forEach((season, index) => {
+            container.append(generateSeasonCard(season, index, show, posterUrl));
+        });
+        let titleElem = create('h2', 'title');
+        titleElem.textContent = 'Seasons';
+        self.append(titleElem, container);
         
     });
     
@@ -308,7 +427,6 @@ function generateShowCard(show) {
     
     showCard.dataset.showId = show.id;
     
-    
     showCard.appendHTML('<div class="global-poster poster"><img alt="" class="posterImage" loading="lazy" data-poster="show-id-' + show.id + '" src="' + (show.poster ? inflateAndGetObject(show.poster) : "images/pixel.png") + '"/></div>');
     
     let cardContent = create('div');
@@ -317,6 +435,21 @@ function generateShowCard(show) {
     
     return showCard
 }
+
+function generateSeasonCard(season, index, show, showPoster) {
+    let showCard = create('div', 'season-card');
+    
+    showCard.dataset.seasonId = season.id;
+    
+    showCard.appendHTML('<div class="global-poster poster"><img alt="" class="posterImage" loading="lazy" data-poster="' + (!season.poster ? "show-id-" + show.id : "season-id-" + season.id) + '" src="' + (season.poster ? inflateAndGetObject(season.poster) : (showPoster ? showPoster : "images/pixel.png")) + '"/></div>');
+    
+    let cardContent = create('div');
+    cardContent.appendHTML('<h3 class="season-title">' + (season.name || (show.name + ' S' + season.position)) + (season.aired ? ' <span class="aired">(' + season.aired.getFullYear() + ')</span>' : '') + '</h3>')
+    showCard.append(cardContent);
+    
+    return showCard
+}
+
 
 db.shows.toArray().then(shows => {
     console.log('shows', shows);

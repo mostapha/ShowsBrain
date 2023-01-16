@@ -137,6 +137,20 @@ document.addEventListener('smartFetchResponse', function (data) {
     smartFetchCallbacks[data.detail.callback](data.detail.response)
 }, false);
 
+// check for Hero addon
+window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(function () {
+        let waiter = setTimeout(function (){
+            alert('hero addon is not found');
+        }, 200);
+        let checkTestHero = function () {
+            clearInterval(waiter);
+            document.removeEventListener('test_hero_succeed', checkTestHero);
+        }
+        document.addEventListener('test_hero_succeed', checkTestHero);
+        document.dispatchEvent(new CustomEvent("test_hero"));
+    }, 200)
+});
 
 const templates = Object.assign({}, ...Array.from(document.querySelector('#template').content.children).map(n => ({[n.id]: n})));
 
