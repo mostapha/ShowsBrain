@@ -16,7 +16,6 @@ $(document).on('submit', 'form', function (e) {
     
 })
 
-
 // load dexie
 let db;
 db = new Dexie("showsMemory");
