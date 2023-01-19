@@ -152,7 +152,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }, 200)
 });
 
-const templates = Object.assign({}, ...Array.from(document.querySelector('#template').content.children).map(n => ({[n.id||n.dataset.templateName]: n})));
+const templates = Object.assign({}, ...Array.from(document.querySelector('#template').content.children).map(n => ({[n.id]: n})));
 
 
 const Helper = (() => {

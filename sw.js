@@ -1,6 +1,6 @@
 
 
-const cacheName = "brain-cache-v2";
+const cacheName = "brain-cache";
 
 let appShellFiles = [
     // html
@@ -89,6 +89,9 @@ self.addEventListener('fetch', (event) => {
 });
 
 
+
+
+
 // used to clear out the old cache we don't need anymore
 self.addEventListener("activate", (e) => {
     console.log('[Service Worker] Activate')
@@ -106,3 +109,29 @@ self.addEventListener("activate", (e) => {
     );
     // e.waitUntil(clients.claim());
 });
+
+
+// self.addEventListener('fetch', (e) => {
+//     console.log(e.request.url);
+//     e.respondWith(
+//         caches.match(e.request).then((response) => response || fetch(e.request)),
+//     );
+// });
+
+// // Establish a cache name
+// const cacheName = 'my-store';
+// self.addEventListener('fetch', (event) => {
+//     // Check if this is a navigation request
+//     console.log('check', event.request, event);
+//     // Open the cache
+//     event.respondWith(caches.open(cacheName).then((cache) => {
+//         // Go to the network first
+//         return fetch(event.request.url).then((fetchedResponse) => {
+//             cache.put(event.request, fetchedResponse.clone());
+//             return fetchedResponse;
+//         }).catch(() => {
+//             // If the network is unavailable, get
+//             return cache.match(event.request);
+//         });
+//     }));
+// });
