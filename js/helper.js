@@ -2,6 +2,42 @@ Node.prototype.appendHTML = function (html) {
     this.insertAdjacentHTML('beforeend', html);
 }
 
+function appendOrdinalSuffix(num) {
+    console.log('num', num);
+    if (num >= 10 && num <= 20) {
+        return num + "th";
+    }
+    var j = num % 10;
+    if (j === 1) {
+        return num + "st";
+    }
+    if (j === 2) {
+        return num + "nd";
+    }
+    if (j === 3) {
+        return num + "rd";
+    }
+    console.log("num", num);
+    return num + "th";
+}
+
+const romanLookup = {
+    1000: 'M', 900: 'CM', 500: 'D', 400: 'CD',
+    100: 'C', 90: 'XC', 50: 'L', 40: 'XL',
+    10: 'X', 9: 'IX', 5: 'V', 4: 'IV', 1: 'I'
+}
+function romanize(num) {
+    let roman = '';
+    for (let i of Object.keys(romanLookup).reverse()) {
+        while (num >= i) {
+            roman += romanLookup[i];
+            num -= i;
+        }
+    }
+    return roman;
+}
+
+
 /* To Title Case © 2018 David Gouch | https://github.com/gouch/to-title-case */
 String.prototype.toTitleCase = function () {
     'use strict'

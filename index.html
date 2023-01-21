@@ -48,6 +48,22 @@
 
 <template id="template">
 
+    <div class="container-fluid g-0" data-template-name='season-header'>
+        <div class="align-self-center row">
+            <div class="col-5 mx-auto">
+                <div class="global-poster poster">
+
+                </div>
+            </div>
+            <div class="col-12 mt-3 text-center">
+                <div class="card-body">
+                    <small class="text-muted season-name-prefix">TV series</small>
+                    <h5 class="season-name">Game of Thrones</h5>
+                    <p class="card-text season-name-extend"><small class="text-muted">Helper text</small></p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <form id="set-related-shows">
         <div class="mb-3">
@@ -121,7 +137,7 @@
     </form>
 
     <div id="show-card">
-        <img alt="" class="posterImage" loading="lazy" draggable="false"
+        <img alt="" class="posterImage" draggable="false" loading="lazy"
              src="https://resizing.flixster.com/UPDcG0wuTEgBFjIas9XDm3I91EY=/180x258/v2/https://resizing.flixster.com/rWtqHDZMYDwWm0ftq35YQzAwzQw=/ems.cHJkLWVtcy1hc3NldHMvdHZzZXJpZXMvMTY4YjA5N2YtZGJkMS00Njk0LThlNzAtYTc3OWY0NTI0ZWI0LmpwZw==">
         <div>
             <h3 class="show-title">{{name}}{{#aired}} ({{aired}}){{/aired}}</h3>
@@ -132,7 +148,8 @@
     <div class="card mb-3 border-0" id='showViewer'>
         <div class="g-0 justify-content-center py-2 row text-center">
             <div class="col-6">
-                <div class="global-poster poster"><img draggable="false" alt="" data-poster="" loading="lazy" src="images/pixel.png"/>
+                <div class="global-poster poster"><img alt="" data-poster="" draggable="false" loading="lazy"
+                                                       src="images/pixel.png"/>
                 </div>
             </div>
             <div class="col-12">
@@ -145,7 +162,7 @@
         </div>
 
         <div class="btn-group gap-2 mb-4">
-            <button class="btn btn-light btn-sm" id="show-edit" type="button" data-bs-title="Default tooltip">
+            <button class="btn btn-light btn-sm" data-bs-title="Default tooltip" id="show-edit" type="button">
                 <i class="fa-regular fa-pen-to-square"></i>
             </button>
 
@@ -210,22 +227,6 @@
         </div>
 
         <div class="mb-3">
-            <label class="form-label">Show poster</label>
-            <div class="border-0 card mb-3">
-                <div class="g-0 justify-content-center row">
-                    <div class="col-4">
-                        <div class="global-poster"><img draggable="false" alt="" loading="lazy" src="images/pixel.png"/></div>
-                    </div>
-                    <div class="col-12 mt-2">
-                        <button class="btn btn-primary btn-secondary btn-sm w-100" id="edit-show-poster" type="button">
-                            Change the poster
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="mb-3">
             <label class="form-label" for="edit-show-summary">Summary</label>
             <textarea class="form-control" id="edit-show-summary" rows="3"></textarea>
         </div>
@@ -256,7 +257,7 @@
 
     <div class="fragment-view hidden-scroll" id='_fragment-view'>
         <nav class="fragment-nav bg-light flex-nowrap gap-2 justify-content-start navbar px-2">
-            <button class="fragment-back btn fw-bold text-black" type="button" data-bs-title="back">
+            <button class="fragment-back btn fw-bold text-black" data-bs-title="back" type="button">
                 <i class="fa-solid fa-arrow-left"></i>
             </button>
             <small class="fragment-title navbar-text text-nowrap text-truncate w-100"></small>
@@ -274,15 +275,20 @@
 
 
     <div class="list-group list-group-flush mx-n3" id='show-more-options-list'>
-        <button class="align-items-center border-0 d-flex list-group-item px-4 py-3 list-group-item-action" data-action='soon'>
-            <i class="fa-duotone fa-image-polaroid fa-fw fa-lg" style="--fa-primary-color: #5a19d1;--fa-secondary-color: #e5e5e5;--fa-primary-opacity: 0.8;--fa-secondary-opacity: 1;"></i>
+        <button class="align-items-center border-0 d-flex list-group-item px-4 py-3 list-group-item-action"
+                data-action='manage-poster'>
+            <i class="fa-duotone fa-image-polaroid fa-fw fa-lg"
+               style="--fa-primary-color: #5a19d1;--fa-secondary-color: #e5e5e5;--fa-primary-opacity: 0.8;--fa-secondary-opacity: 1;"></i>
             <span class="ms-3 fw-semibold">Manage Poster</span>
         </button>
-        <button class="align-items-center border-0 d-flex list-group-item px-4 py-3 list-group-item-action" data-action='manage-related-shows'>
-            <i class="fa-duotone fa-arrow-down-left-and-arrow-up-right-to-center fa-fw fa-lg" style="--fa-primary-color: #6f42c1;"></i>
+        <button class="align-items-center border-0 d-flex list-group-item px-4 py-3 list-group-item-action"
+                data-action='manage-related-shows'>
+            <i class="fa-duotone fa-arrow-down-left-and-arrow-up-right-to-center fa-fw fa-lg"
+               style="--fa-primary-color: #6f42c1;"></i>
             <span class="ms-3 fw-semibold">Manage Related Shows</span>
         </button>
-        <button class="align-items-center border-0 d-flex list-group-item px-4 py-3 list-group-item-action text-danger" data-action='delete-show'>
+        <button class="align-items-center border-0 d-flex list-group-item px-4 py-3 list-group-item-action text-danger"
+                data-action='delete-show'>
             <i class="fa-solid fa-trash fa-fw fa-lg"></i>
             <span class="ms-3 fw-semibold">Delete show</span>
         </button>
