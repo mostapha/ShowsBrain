@@ -106,3 +106,28 @@ self.addEventListener("activate", (e) => {
     );
     // e.waitUntil(clients.claim());
 });
+
+
+
+
+self.onmessage = async (event) => {
+    let data = event.data,
+        message = data.message;
+    
+    if(message === "test-fetch"){
+        console.log('test-fetch called');
+    
+        
+        const request = new Request('https://betterlinks.io/wp-content/uploads/2022/05/How-to-Prevent-Hotlinking-in-WordPress2022_1280_720-1.jpg', {
+            mode: 'cors'
+        });
+    
+        fetch(request)
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error(error))
+    
+        
+    }
+};
+
