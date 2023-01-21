@@ -10,10 +10,44 @@ $(document).on('submit', 'form', function (e) {
     db.shows.get({id: Number(showId)}).then(show => {
         console.log('showw', show)
         if (show) {
-            Drawer.open('show-info', show);
+            // Drawer.open('show-info', show);
+            Fragment.select('show-info').push({
+                name: "show-interface",
+                params: {show: show}
+            }, show.name);
         }
     });
     
+}).on('click', '.season-card', function () {
+    console.log('season card clicked', this.dataset.seasonId);
+    
+    let seasonId = this.dataset.seasonId;
+    console.log('seasonId', seasonId);
+    db.seasons.get({id: Number(seasonId)}).then(season => {
+        if (season) {
+            console.log('season:', season)
+            db.shows.get({id: season.showId}).then(show => {
+                // Drawer.open('season-info', season);
+                Fragment.select('season-info').push(function () {
+                    let $t = $(this);
+                    
+                    let drawing = $(templates['season-header'].cloneNode(true));
+                    
+                    if (!season.name) {
+                        drawing.find('.season-name-prefix').text("Season " + season.position);
+                    } else {
+                        drawing.find('.season-name-prefix').text(show.name + '\'s');
+                    }
+                    drawing.find('.season-name').text(season.name || show.name)
+                    
+                    $t.html(drawing);
+                    
+                }, season.name || (show.name + " " + appendOrdinalSuffix(season.position) + ' part'));
+            })
+        } else throw "season not found";
+        
+        
+    });
 })
 
 // load dexie
@@ -78,9 +112,13 @@ document.querySelector('.add-show').addEventListener('click', function () {
                         self.Fragment.back();
                         db.shows.get({id: showId}).then(show => {
                             $('.show-list-inner').append(generateShowCard(show))
-                            setTimeout(() => {
-                                Drawer.open('show-info', show);
-                            }, 300)
+                            
+                            // Drawer.open('show-info', show);
+                            Fragment.select('show-info').push({
+                                name: "show-interface",
+                                params: {show: show}
+                            }, show.name);
+                            
                         });
                     })
                 })
@@ -98,7 +136,19 @@ document.querySelector('.add-show').addEventListener('click', function () {
 
 
 // view show drawer
-Drawer.register('show-info', function (show) {
+
+
+// Fragment.select('beta-show-info').push(function(){
+//     let self = this,
+//         $t = $(self);
+//
+//     $t.text('fine');
+// }, "title");
+
+
+Fragment.plant('show-interface', function (params) {
+    const show = params.show;
+    
     let self = this,
         $t = $(self);
     
@@ -137,8 +187,7 @@ Drawer.register('show-info', function (show) {
                 showSummary = $t.find('#edit-show-summary'),
                 showSeasonsCount = $t.find('#edit-show-seasons-count'),
                 showStatus = $t.find('#edit-show-status'),
-                $posterImg = $t.find('.global-poster img'),
-                showPosterEdit = $t.find('#edit-show-poster');
+                $posterImg = $t.find('.global-poster img');
             
             showId.val(show.id);
             showAdded.val(Helper.formatDate(show.added));
@@ -158,106 +207,6 @@ Drawer.register('show-info', function (show) {
                 }
                 $posterImg[0].src = objUrl;
             }
-            
-            showPosterEdit.click(function () {
-                Fragment.select('show-editor').push(function () {
-                    let self = this,
-                        $t = $(self);
-                    
-                    $t.html(templates['upload-image'].cloneNode(1));
-                    
-                    let $imageUrl = $t.find('#set-image-url'),
-                        $posterImg = $t.find('.poster img');
-                    
-                    let $getImage = $t.find('#get-image'),
-                        $saveBtn = $t.find('#save-image');
-                    
-                    $posterImg.attr('data-poster', 'show-id-' + show.id);
-                    if (show.poster) {
-                        let objUrl = inflateAndGetObject(show.poster)
-                        
-                        $posterImg[0].onload = function () {
-                            URL.revokeObjectURL(objUrl);
-                        }
-                        $posterImg[0].src = objUrl;
-                    }
-                    
-                    let objectUrl;
-                    $getImage.click(function () {
-                        let self = this,
-                            $self = $(self);
-                        
-                        let val = $imageUrl.val();
-                        if (val.trim() === "") {
-                            alert('add image url');
-                        } else {
-                            $self.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
-                            $saveBtn.prop('disabled', true);
-                            
-                            console.log('valid url', val);
-                            
-                            if (objectUrl) {
-                                URL.revokeObjectURL(objectUrl);
-                                objectUrl = null;
-                            }
-                            
-                            let imgElem = create('img');
-                            Helper.getImage(val, true).then(blob => {
-                                // save it, we will use it when we confirm adding image
-                                
-                                let imageUrl = URL.createObjectURL(blob)
-                                
-                                objectUrl = imageUrl;
-                                
-                                console.log('blob', blob);
-                                console.log('objectUrl', imageUrl);
-                                
-                                $saveBtn.prop('disabled', false);
-                                $self.text('Get').prop('disabled', false);
-                                
-                                $posterImg[0].src = imageUrl
-                            }).catch(n => {
-                                console.error(n);
-                                $posterImg[0].attr('src', 'images/pixel.png');
-                                $saveBtn.prop('disabled', true);
-                                $self.text('Get').prop('disabled', false);
-                            });
-                            
-                        }
-                    })
-                    
-                    $saveBtn.click(function () {
-                        console.log('set image to:', 'show' + show.id);
-                        console.log('objectUrl', objectUrl)
-                        
-                        Helper.resizePoster(objectUrl).then(blob => {
-                            blob.arrayBuffer().then(buffer => {
-                                let arrayBuffer = new Uint8Array(buffer);
-                                db.shows.where({id: show.id}).modify(show => {
-                                    show.poster = pako.deflate(arrayBuffer);
-                                }).then(n => {
-                                    if (n === 1) {
-                                        document.querySelectorAll('img[data-poster="show-id-' + show.id + '"]').forEach(n => {
-                                            let obj = URL.createObjectURL(blob);
-                                            n.onload = function () {
-                                                URL.revokeObjectURL(obj);
-                                            }
-                                            n.src = obj
-                                        });
-                                        URL.revokeObjectURL(objectUrl);
-                                        console.log('saved');
-                                        
-                                        $t.prop('Fragment').back();
-                                    } else {
-                                        alert('unexpected reach');
-                                    }
-                                });
-                            });
-                        });
-                    })
-                    
-                }, show.name + "'s poster");
-            });
             
             
             $t.find('#show-edit-form').submit(function () {
@@ -380,7 +329,12 @@ Drawer.register('show-info', function (show) {
                                     c.replaceWith(newCard);
                                 })
                                 
-                                Drawer.open('show-info', show);
+                                // Drawer.open('show-info', show);
+                                Fragment.select('show-info').push({
+                                    name: "show-interface",
+                                    params: {show: show}
+                                }, show.name);
+                                
                             })
                         } else alert('changes is not 1 as expected');
                         
@@ -451,7 +405,11 @@ Drawer.register('show-info', function (show) {
                             db.shows.get({id: show.id}).then(show => {
                                 $t.prop('Fragment').back();
                                 
-                                Drawer.open('show-info', show);
+                                // Drawer.open('show-info', show);
+                                Fragment.select('show-info').push({
+                                    name: "show-interface",
+                                    params: {show: show}
+                                }, show.name);
                             })
                         } else alert('unexpected results, changes is not 1');
                         
@@ -530,17 +488,18 @@ Drawer.register('show-info', function (show) {
                                             });
                                             
                                             return Promise.all([editOrigin, editRelated]).then(r => {
-                                                if(r[0] !== 1 || r[1] !== 1){
-                                                    throw "This looks suspicious, one of 'changes' is not 1";;
+                                                if (r[0] !== 1 || r[1] !== 1) {
+                                                    throw "This looks suspicious, one of 'changes' is not 1";
+                                                    ;
                                                 }
                                             });
                                         }).then(() => {
                                             
                                             let item = self.closest('li')
-                                            if(item.parentElement.childElementCount === 1){
+                                            if (item.parentElement.childElementCount === 1) {
                                                 let parent = item.parentElement;
                                                 
-                                                if(parent.parentElement.childElementCount === 2){
+                                                if (parent.parentElement.childElementCount === 2) {
                                                     $t.html('<div class="fs-5 fs-6 p-5 text-center text-muted">No related shows found</div>');
                                                 } else {
                                                     [parent.previousElementSibling, parent].forEach(n => n.remove());
@@ -549,7 +508,7 @@ Drawer.register('show-info', function (show) {
                                             } else {
                                                 item.remove();
                                             }
-                                    
+                                            
                                             
                                         }).catch(err => {
                                             console.warn("no commit");
@@ -819,6 +778,106 @@ Drawer.register('show-info', function (show) {
                         }
                         break;
                     }
+                    case 'manage-poster': {
+                        Fragment.select('show-editor').push(function () {
+                            let self = this,
+                                $t = $(self);
+                            
+                            $t.html(templates['upload-image'].cloneNode(1));
+                            
+                            let $imageUrl = $t.find('#set-image-url'),
+                                $posterImg = $t.find('.poster img');
+                            
+                            let $getImage = $t.find('#get-image'),
+                                $saveBtn = $t.find('#save-image');
+                            
+                            $posterImg.attr('data-poster', 'show-id-' + show.id);
+                            if (show.poster) {
+                                let objUrl = inflateAndGetObject(show.poster)
+                                
+                                $posterImg[0].onload = function () {
+                                    URL.revokeObjectURL(objUrl);
+                                }
+                                $posterImg[0].src = objUrl;
+                            }
+                            
+                            let objectUrl;
+                            $getImage.click(function () {
+                                let self = this,
+                                    $self = $(self);
+                                
+                                let val = $imageUrl.val();
+                                if (val.trim() === "") {
+                                    alert('add image url');
+                                } else {
+                                    $self.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+                                    $saveBtn.prop('disabled', true);
+                                    
+                                    console.log('valid url', val);
+                                    
+                                    if (objectUrl) {
+                                        URL.revokeObjectURL(objectUrl);
+                                        objectUrl = null;
+                                    }
+                                    
+                                    let imgElem = create('img');
+                                    Helper.getImage(val, true).then(blob => {
+                                        // save it, we will use it when we confirm adding image
+                                        
+                                        let imageUrl = URL.createObjectURL(blob)
+                                        
+                                        objectUrl = imageUrl;
+                                        
+                                        console.log('blob', blob);
+                                        console.log('objectUrl', imageUrl);
+                                        
+                                        $saveBtn.prop('disabled', false);
+                                        $self.text('Get').prop('disabled', false);
+                                        
+                                        $posterImg[0].src = imageUrl
+                                    }).catch(n => {
+                                        console.error(n);
+                                        $posterImg[0].attr('src', 'images/pixel.png');
+                                        $saveBtn.prop('disabled', true);
+                                        $self.text('Get').prop('disabled', false);
+                                    });
+                                    
+                                }
+                            })
+                            
+                            $saveBtn.click(function () {
+                                console.log('set image to:', 'show' + show.id);
+                                console.log('objectUrl', objectUrl)
+                                
+                                Helper.resizePoster(objectUrl).then(blob => {
+                                    blob.arrayBuffer().then(buffer => {
+                                        let arrayBuffer = new Uint8Array(buffer);
+                                        db.shows.where({id: show.id}).modify(show => {
+                                            show.poster = pako.deflate(arrayBuffer);
+                                        }).then(n => {
+                                            if (n === 1) {
+                                                document.querySelectorAll('img[data-poster="show-id-' + show.id + '"]').forEach(n => {
+                                                    let obj = URL.createObjectURL(blob);
+                                                    n.onload = function () {
+                                                        URL.revokeObjectURL(obj);
+                                                    }
+                                                    n.src = obj
+                                                });
+                                                URL.revokeObjectURL(objectUrl);
+                                                console.log('saved');
+                                                
+                                                $t.prop('Fragment').back();
+                                            } else {
+                                                alert('unexpected reach');
+                                            }
+                                        });
+                                    });
+                                });
+                            })
+                            
+                        }, show.name + "'s poster");
+                        break;
+                    }
                     default: {
                         alert('action not found');
                     }
@@ -909,6 +968,11 @@ Drawer.register('show-info', function (show) {
     // }
     //
     
+    
+});
+
+Drawer.register('show-info', function (show) {
+
 }, 1);
 
 
@@ -935,7 +999,7 @@ function generateShowCard(show) {
 }
 
 function generateInternalCard(type, item, seasonShow, showPoster) {
-    let showCard = create('div', 'stacks-in-card');
+    let showCard = create('div', (type === 'season' ? 'season-card ' : 'show-card ') + 'stacks-in-card');
     
     if (type === 'season') {
         showCard.dataset.seasonId = item.id;

@@ -1,6 +1,6 @@
 
 body {
-    padding: 30px;
+    padding: 1em;
 }
 
 .hidden-scroll {
@@ -12,18 +12,18 @@ body {
 
 
 .stack-title {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 700;
-    margin: 0 0 20px;
+    margin: 0 0 0.5em;
 }
 
 .show-list-inner {
     display: flex;
-    gap: 15px;
+    gap: 0.8em;
     overflow: auto;
-    margin: 0 -30px;
-    padding-right: 30px;
-    padding-left: 30px;
+    margin: 0 -1em;
+    padding-right: 1em;
+    padding-left: 1em;
 }
 
 .show-list-inner::-webkit-scrollbar {
@@ -98,8 +98,8 @@ body {
     justify-content: center;
     font-size: 24Px;
     color: #fff;
-    right: 40px;
-    bottom: 40px;
+    right: 16px;
+    bottom: 16Px;
     box-shadow: 0 4px 5px #2222223b;
     cursor: pointer;
 }
@@ -179,6 +179,7 @@ body {
     height: 100%;
     max-width: 600px;
     display: none;
+    background: white;
 }
 
 .fragment-view:last-child {

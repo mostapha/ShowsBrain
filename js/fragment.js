@@ -21,11 +21,15 @@ const Fragment = (() => {
         }
         
         hideDim() {
-            dim.style.visibility = 'hidden'
+            if(Object.keys(activities).length === 0){
+                dim.style.visibility = 'hidden'
+            }
         }
-        
+
         push(callback, title, navActions) {
+            
             let self = this;
+            
             let template = templates['_fragment-view'].cloneNode(1);
             template.removeAttribute('id');
             this.frag.append(template);
@@ -35,7 +39,6 @@ const Fragment = (() => {
             template.querySelector('.fragment-back').onclick = function () {
                 self.back();
             }
-            
             if(navActions){
                 let navActionsElem = template.querySelector('.nav-actions')
                 navActions.forEach(navAction => {
@@ -74,13 +77,17 @@ const Fragment = (() => {
             
             
             template.lastElementChild.Fragment = this;
-            callback.call(template.lastElementChild);
+            
+            if(typeof callback === 'object'){
+                if(plantedFunctions[callback.name] !== undefined){
+                    plantedFunctions[callback.name].call(template.lastElementChild, callback.params)
+                } else throw callback.name + " is not planted";
+            } else callback.call(template.lastElementChild);
         }
         
         back() {
             if (this.#stack.length > 0) {
                 this.#stack.pop().remove();
-                
                 if (this.#stack.length === 0) {
                     delete activities[this.id];
                     this.frag.remove();
@@ -99,10 +106,15 @@ const Fragment = (() => {
         get stacks() {
             return this.#stack
         }
+        get activities() {
+            return activities
+        }
     }
     
     // caches list of fragments
     let activities = {};
+    
+    let plantedFunctions = {};
     
     function selectFragment(id){
         if (activities[id]) {
@@ -126,11 +138,22 @@ const Fragment = (() => {
     
     return {
         select: selectFragment,
+        register: () => {
         
+        },
         getFragments() {
             return activities;
         },
-        getActiveFragment: getActiveFragment
+        getActiveFragment: getActiveFragment,
+        
+        plant(codeName, callback) {
+            if(plantedFunctions[codeName] === undefined){
+                plantedFunctions[codeName] = callback;
+                console.log(codeName + ' is planted successfully');
+            } else throw codeName + " is already planted";
+        },
+        
+        getActivities: () => activities
     }
 })();
 
