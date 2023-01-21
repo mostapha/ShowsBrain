@@ -255,7 +255,7 @@
 
     </form>
 
-    <div class="fragment-view hidden-scroll" id='_fragment-view'>
+    <div class="fragment-view hidden-scroll" data-template-name="fragment-view">
         <nav class="fragment-nav bg-light flex-nowrap gap-2 justify-content-start navbar px-2">
             <button class="fragment-back btn fw-bold text-black" data-bs-title="back" type="button">
                 <i class="fa-solid fa-arrow-left"></i>
@@ -275,19 +275,19 @@
 
 
     <div class="list-group list-group-flush mx-n3" id='show-more-options-list'>
-        <button class="align-items-center border-0 d-flex list-group-item px-4 py-3 list-group-item-action"
+        <button class="align-items-center border-0 d-flex list-group-item py-3 list-group-item-action"
                 data-action='manage-poster'>
             <i class="fa-duotone fa-image-polaroid fa-fw fa-lg"
                style="--fa-primary-color: #5a19d1;--fa-secondary-color: #e5e5e5;--fa-primary-opacity: 0.8;--fa-secondary-opacity: 1;"></i>
             <span class="ms-3 fw-semibold">Manage Poster</span>
         </button>
-        <button class="align-items-center border-0 d-flex list-group-item px-4 py-3 list-group-item-action"
+        <button class="align-items-center border-0 d-flex list-group-item py-3 list-group-item-action"
                 data-action='manage-related-shows'>
             <i class="fa-duotone fa-arrow-down-left-and-arrow-up-right-to-center fa-fw fa-lg"
                style="--fa-primary-color: #6f42c1;"></i>
             <span class="ms-3 fw-semibold">Manage Related Shows</span>
         </button>
-        <button class="align-items-center border-0 d-flex list-group-item px-4 py-3 list-group-item-action text-danger"
+        <button class="align-items-center border-0 d-flex list-group-item py-3 list-group-item-action text-danger"
                 data-action='delete-show'>
             <i class="fa-solid fa-trash fa-fw fa-lg"></i>
             <span class="ms-3 fw-semibold">Delete show</span>

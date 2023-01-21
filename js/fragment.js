@@ -30,8 +30,11 @@ const Fragment = (() => {
             
             let self = this;
             
-            let template = templates['_fragment-view'].cloneNode(1);
-            template.removeAttribute('id');
+            let template = templates['fragment-view'].cloneNode(1);
+            if(title){
+                template.dataset.name = title;
+            }
+            
             this.frag.append(template);
             this.#stack.push(template);
             
@@ -39,7 +42,8 @@ const Fragment = (() => {
             template.querySelector('.fragment-back').onclick = function () {
                 self.back();
             }
-            if(navActions){
+            
+            function initNavActions(navActions){
                 let navActionsElem = template.querySelector('.nav-actions')
                 navActions.forEach(navAction => {
                     console.log('navAction', navAction);
@@ -51,29 +55,34 @@ const Fragment = (() => {
                     if(navAction.name){
                         btn.dataset.bsTitle = navAction.name
                     }
-                    
+        
                     navActionsElem.insertAdjacentElement('afterbegin', btn);
+        
+                    let tooltip,
+                        holdTimeout = -1;
+                    btn.addEventListener("touchstart", function () {
+                        holdTimeout = setTimeout(function () {
+                            (tooltip || (tooltip = new bootstrap.Tooltip(btn, {
+                                placement: 'bottom',
+                                trigger: 'manual',
+                                fallbackPlacements: ['bottom-start', 'bottom-end'],
+                            }))).show();
+                        }, 500);
+                    }, {passive: true});
+                    btn.addEventListener("touchend", function () {
+                        clearTimeout(holdTimeout);
+                        tooltip?.hide();
+                    });
                 });
             }
+            if(navActions){
+                initNavActions(navActions)
+            }
+            template.lastElementChild.registerNavAction = function (navActions){
+                initNavActions(navActions)
+            }
             
-            const tooltipTriggerList = template.querySelectorAll('[data-bs-title]');
-            tooltipTriggerList.forEach(tooltipTriggerEl => {
-                let tooltip;
-                let holdTimeout = -1;
-                tooltipTriggerEl.addEventListener("touchstart", function () {
-                    holdTimeout = setTimeout(function () {
-                        (tooltip || (tooltip = new bootstrap.Tooltip(tooltipTriggerEl, {
-                            placement: 'bottom',
-                            trigger: 'manual',
-                            fallbackPlacements: ['bottom-start', 'bottom-end'],
-                        }))).show();
-                    }, 500);
-                }, {passive: true});
-                tooltipTriggerEl.addEventListener("touchend", function () {
-                    clearTimeout(holdTimeout);
-                    tooltip?.hide();
-                });
-            })
+            
             
             
             template.lastElementChild.Fragment = this;
