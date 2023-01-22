@@ -43,7 +43,8 @@
         <div class="align-self-center row">
             <div class="col-5 mx-auto">
                 <div class="global-poster poster">
-
+                    <img alt="" data-poster="" draggable="false" loading="lazy"
+                         src="images/pixel.png"/>
                 </div>
             </div>
             <div class="col-12 mt-3 text-center">
@@ -267,6 +268,21 @@
         </button>
     </div>
 
+    <div class="list-group list-group-flush mx-n3" data-template-name="season-edit-menu">
+        <button class="align-items-center border-0 d-flex list-group-item py-3 list-group-item-action"
+                data-action='edit-season'>
+            <i class="fa-duotone fa-pen-to-square fa-fw fa-lg"
+               style="--fa-primary-color: #5a19d1; --fa-secondary-color: #e5e5e5; --fa-secondary-opacity: 1;"></i>
+            <span class="ms-3 fw-semibold">Edit details</span>
+        </button>
+        <button class="align-items-center border-0 d-flex list-group-item py-3 list-group-item-action"
+                data-action='edit-season-poster'>
+            <i class="fa-duotone fa-image-polaroid fa-fw fa-lg"
+               style="--fa-primary-color: #5a19d1;--fa-secondary-color: #e5e5e5;--fa-primary-opacity: 0.8;--fa-secondary-opacity: 1;"></i>
+            <span class="ms-3 fw-semibold">Manage Poster</span>
+        </button>
+    </div>
+
     <div id="upload-image">
 
         <div class="text-center">
@@ -327,17 +343,23 @@
         <button class="btn btn-primary" type="submit">Submit</button>
     </form>
 
-
-    <div class="user-prefs-main" data-template-name="user-prefs">
+    <div class="my-4 user-prefs-main" data-template-name="user-prefs">
         <div class="align-items-center g-0 row text-center">
-            <div class="col">
-                <i class="fa-solid fa-star icon" style="color: #ffb100;"></i>
-                <span class="icon-helper">Excellent</span>
+            <div class="col rating">
+                <i class="icon fa-star fa-thin"></i>
+                <span class="icon-helper">Not rated</span>
             </div>
+
             <div class="col-auto separator"></div>
-            <div class="col">
-                <i class="fa-solid fa-tv-retro icon" style="color: #404abf;"></i>
-                <span class="icon-helper">Plan to Watch</span>
+            <div class="col status" id="quick-show-status">
+                <i class="icon fa not-classified"></i>
+                <span class="icon-helper">show status</span>
+            </div>
+
+            <div class="col-auto separator"></div>
+            <div class="col user-status" id="quick-user-status">
+                <i class="icon fa not-classified"></i>
+                <span class="icon-helper">user status</span>
             </div>
         </div>
     </div>

@@ -235,3 +235,64 @@ nav.red500 {
     margin-top: 0.5rem;
     color: #495057;
 }
+
+
+.user-prefs-main .icon.not-classified:before {
+    content: "\3f";
+    font-weight: 600;
+    color: #6c757d;
+}
+
+
+.user-prefs-main .icon.watching:before {
+    content: "\f819";
+    font-weight: 600;
+    color: #146c43;
+}
+.user-prefs-main .icon.on-hold:before {
+    content: "\f04c";
+    font-weight: 600;
+    color: #ca6510;
+}
+.user-prefs-main .icon.plan-to-watch:before {
+    content: "\f251";
+    font-weight: 600;
+    color: #6610f2;
+}
+.user-prefs-main .icon.pending:before {
+    content: "\f736";
+    font-weight: 600;
+    color: #cc9a06;
+}
+.user-prefs-main .icon.completed:before {
+    content: "\f560";
+    font-weight: 600;
+    color: #1aa179;
+}
+.user-prefs-main .icon.dropped:before {
+    content: "\e59b";
+    font-weight: 600;
+    color: #b02a37;
+}
+
+/* done coloring */
+.user-prefs-main .icon.upcoming:before {
+    content: "\f073";
+    font-weight: 600;
+    color: #0a58ca;
+}
+.user-prefs-main .icon.ongoing:before {
+    content: "\e132";
+    font-weight: 600;
+    color: #13795b;
+}
+.user-prefs-main .icon.ended:before {
+    content: "\f274";
+    font-weight: 600;
+    color: #495057;
+}
+.user-prefs-main .icon.canceled:before {
+    content: "\e179";
+    font-weight: 600;
+    color: #b02a37;
+}
