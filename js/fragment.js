@@ -2,6 +2,13 @@ const Fragment = (() => {
     const fragmentContainer = document.getElementById('fragments'),
         dim = document.querySelector('#fragment-dim');
     
+    
+    let popstateIndex = 0;
+    window.onpopstate = (event) => {
+        console.log('event', event, event.state);
+        Fragment.getActiveFragment()?.back()
+    }
+    
     class FragmentGenerator {
         // used to save stacks
         #stack = [];
@@ -21,17 +28,19 @@ const Fragment = (() => {
         }
         
         hideDim() {
-            if(Object.keys(activities).length === 0){
+            if (Object.keys(activities).length === 0) {
                 dim.style.visibility = 'hidden'
             }
         }
-
-        push(callback, title, navActions) {
+        
+        push(callback, title, navActions, style) {
+            
+            history.pushState(++popstateIndex, '', null);
+            
             
             let self = this;
-            
             let template = templates['fragment-view'].cloneNode(1);
-            if(title){
+            if (title) {
                 template.dataset.name = title;
             }
             
@@ -43,21 +52,33 @@ const Fragment = (() => {
                 self.back();
             }
             
-            function initNavActions(navActions){
+            
+            function setNavStyle(style) {
+                template.querySelector('nav').classList.add(style);
+            }
+            
+            if (style) {
+                setNavStyle(style)
+            }
+            
+            function initNavActions(navActions) {
+    
+                console.log('initNavActions', navActions);
+                
                 let navActionsElem = template.querySelector('.nav-actions')
                 navActions.forEach(navAction => {
                     console.log('navAction', navAction);
                     let btn = create('button', {
                         className: 'btn',
-                        innerHTML: '<i class="'+navAction.icon+'"></i>',
+                        innerHTML: '<i class="' + navAction.icon + '"></i>',
                         onclick: () => navAction.action.call(template.lastElementChild)
                     });
-                    if(navAction.name){
+                    if (navAction.name) {
                         btn.dataset.bsTitle = navAction.name
                     }
-        
-                    navActionsElem.insertAdjacentElement('afterbegin', btn);
-        
+                    
+                    navActionsElem.insertAdjacentElement('beforeend', btn);
+                    
                     let tooltip,
                         holdTimeout = -1;
                     btn.addEventListener("touchstart", function () {
@@ -75,20 +96,22 @@ const Fragment = (() => {
                     });
                 });
             }
-            if(navActions){
+            
+            if (navActions) {
                 initNavActions(navActions)
             }
-            template.lastElementChild.registerNavAction = function (navActions){
+            template.lastElementChild.registerNavAction = function (navActions) {
                 initNavActions(navActions)
             }
-            
-            
+            template.lastElementChild.setNavStyle = function (style) {
+                setNavStyle(style)
+            }
             
             
             template.lastElementChild.Fragment = this;
             
-            if(typeof callback === 'object'){
-                if(plantedFunctions[callback.name] !== undefined){
+            if (typeof callback === 'object') {
+                if (plantedFunctions[callback.name] !== undefined) {
                     plantedFunctions[callback.name].call(template.lastElementChild, callback.params)
                 } else throw callback.name + " is not planted";
             } else callback.call(template.lastElementChild);
@@ -115,6 +138,7 @@ const Fragment = (() => {
         get stacks() {
             return this.#stack
         }
+        
         get activities() {
             return activities
         }
@@ -125,7 +149,7 @@ const Fragment = (() => {
     
     let plantedFunctions = {};
     
-    function selectFragment(id){
+    function selectFragment(id) {
         if (activities[id]) {
             // return activity
             return activities[id]
@@ -135,13 +159,13 @@ const Fragment = (() => {
         }
     }
     
-    function getActiveFragment(){
-        if(fragmentContainer.lastElementChild.id !== "fragment-dim"){
+    function getActiveFragment() {
+        if (fragmentContainer.lastElementChild.id !== "fragment-dim") {
             return selectFragment(fragmentContainer.lastElementChild.dataset.id)
         } else return null;
     }
-
-    dim.onclick = function(){
+    
+    dim.onclick = function () {
         Fragment.getActiveFragment().back();
     }
     
@@ -156,7 +180,7 @@ const Fragment = (() => {
         getActiveFragment: getActiveFragment,
         
         plant(codeName, callback) {
-            if(plantedFunctions[codeName] === undefined){
+            if (plantedFunctions[codeName] === undefined) {
                 plantedFunctions[codeName] = callback;
                 console.log(codeName + ' is planted successfully');
             } else throw codeName + " is already planted";

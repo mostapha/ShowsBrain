@@ -36,15 +36,6 @@
     <i class="fas fa-plus"></i>
 </span>
 
-<div class="drawer-container">
-    <div class="drawer hidden-scroll"></div>
-    <div class="drawer-dim"></div>
-</div>
-
-<div class="bottom-modal">
-    <div class="bottom-modal-content"></div>
-    <div class="drawer-dim"></div>
-</div>
 
 <template id="template">
 
@@ -145,8 +136,8 @@
     </div>
 
 
-    <div class="card mb-3 border-0" id='showViewer'>
-        <div class="g-0 justify-content-center py-2 row text-center">
+    <div class="card mb-4 border-0" id='showViewer'>
+        <div class="g-0 justify-content-center row text-center">
             <div class="col-6">
                 <div class="global-poster poster"><img alt="" data-poster="" draggable="false" loading="lazy"
                                                        src="images/pixel.png"/>
@@ -160,30 +151,6 @@
                 </div>
             </div>
         </div>
-
-        <div class="btn-group gap-2 mb-4">
-            <button class="btn btn-light btn-sm" data-bs-title="Default tooltip" id="show-edit" type="button">
-                <i class="fa-regular fa-pen-to-square"></i>
-            </button>
-
-            <button class="btn btn-light btn-sm" id="show-classify" type="button">
-                <i class="fa-regular fa-user-pen"></i>
-            </button>
-
-            <button class="btn btn-light btn-sm" data-bs-target="#show-edit-list" data-bs-toggle="collapse"
-                    id="show-add-info" type="button">
-                <i class="fa-solid fa-ellipsis"></i>
-            </button>
-        </div>
-
-
-        <ul class="list-group collapse" id='show-edit-list'>
-            <li class="list-group-item">Basic info</li>
-            <li class="list-group-item">Related shows</li>
-            <li class="list-group-item">A third item</li>
-            <li class="list-group-item">A fourth item</li>
-            <li class="list-group-item">And a fifth one</li>
-        </ul>
     </div>
 
     <form id="show-edit-form">
@@ -263,7 +230,7 @@
             <small class="fragment-title navbar-text text-nowrap text-truncate w-100"></small>
             <div class="nav-actions d-flex"></div>
         </nav>
-        <div class="fragment-content p-3"></div>
+        <div class="fragment-content p-3 pt-4"></div>
     </div>
 
 
@@ -275,6 +242,12 @@
 
 
     <div class="list-group list-group-flush mx-n3" id='show-more-options-list'>
+        <button class="align-items-center border-0 d-flex list-group-item py-3 list-group-item-action"
+                data-action='edit-show'>
+            <i class="fa-duotone fa-pen-to-square fa-fw fa-lg"
+               style="--fa-primary-color: #5a19d1; --fa-secondary-color: #e5e5e5; --fa-secondary-opacity: 1;"></i>
+            <span class="ms-3 fw-semibold">Edit details</span>
+        </button>
         <button class="align-items-center border-0 d-flex list-group-item py-3 list-group-item-action"
                 data-action='manage-poster'>
             <i class="fa-duotone fa-image-polaroid fa-fw fa-lg"
@@ -367,7 +340,6 @@
 <script src="libraries/bootstrap/js/bootstrap.bundle.js"></script>
 <script src="js/helper.js"></script>
 <script src="js/fragment.js"></script>
-<script src="js/drawer.js"></script>
 <script src="js/app.js"></script>
 
 

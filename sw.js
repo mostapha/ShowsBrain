@@ -1,6 +1,6 @@
 
 
-const cacheName = "brain-cache-v2";
+const cacheName = "brain-cache-v3";
 
 let appShellFiles = [
     // html
@@ -33,7 +33,6 @@ let appShellFiles = [
     "/ShowsBrain/libraries/bootstrap/js/bootstrap.bundle.js",
     "/ShowsBrain/js/helper.js",
     "/ShowsBrain/js/fragment.js",
-    "/ShowsBrain/js/drawer.js",
     "/ShowsBrain/js/app.js",
     
     // images

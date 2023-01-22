@@ -10,7 +10,7 @@ $(document).on('submit', 'form', function (e) {
     db.shows.get({id: Number(showId)}).then(show => {
         console.log('showw', show)
         if (show) {
-            // Drawer.open('show-info', show);
+            
             Fragment.select('show-info').push({
                 name: "show-interface",
                 params: {show: show}
@@ -27,7 +27,6 @@ $(document).on('submit', 'form', function (e) {
         if (season) {
             console.log('season:', season)
             db.shows.get({id: season.showId}).then(show => {
-                // Drawer.open('season-info', season);
                 Fragment.select('season-info').push(function () {
                     let $t = $(this);
                     
@@ -42,7 +41,7 @@ $(document).on('submit', 'form', function (e) {
                     
                     $t.html(drawing);
                     
-                }, season.name || (show.name + " " + appendOrdinalSuffix(season.position) + ' part'));
+                }, season.name || (show.name + " " + appendOrdinalSuffix(season.position) + ' part'), null, "indigo600");
             })
         } else throw "season not found";
         
@@ -113,7 +112,7 @@ document.querySelector('.add-show').addEventListener('click', function () {
                         db.shows.get({id: showId}).then(show => {
                             $('.show-list-inner').append(generateShowCard(show))
                             
-                            // Drawer.open('show-info', show);
+                            
                             Fragment.select('show-info').push({
                                 name: "show-interface",
                                 params: {show: show}
@@ -135,7 +134,6 @@ document.querySelector('.add-show').addEventListener('click', function () {
 });
 
 
-// view show drawer
 
 
 // Fragment.select('beta-show-info').push(function(){
@@ -153,8 +151,84 @@ Fragment.plant('show-interface', function (params) {
     
     // handle gear function
     self.registerNavAction([{
+        name: 'User preferences',
+        icon: 'fa-regular fa-user-gear',
+        action: function () {
+            
+            // show edit fragment
+            Fragment.select('show-info').push(function () {
+                let $t = $(this);
+                $t.html(templates['classify-show'].cloneNode(1));
+                
+                let showUserStatus = $t.find('#edit-show-userStatus'),
+                    showRating = $t.find('#edit-show-rating'),
+                    showNotes = $t.find('#edit-show-notes');
+                
+                showUserStatus.val(show.userStatus ?? "");
+                showRating.val(show.rating ?? "");
+                showNotes.val(show.notes ?? "");
+                
+                
+                $t.find('#classify-show').submit(function () {
+                    let changes = {
+                        userStatus: showUserStatus.val() === show.userStatus || (showUserStatus.val().trim() === "" && !show.userStatus) ? false : showUserStatus.val(),
+                        rating: isNaN(parseInt(showRating.val())) || parseInt(showRating.val()) === show.rating ? (showRating.val().trim() === "" && show.rating !== undefined ? 0 : false) : parseInt(showRating.val()),
+                        notes: showNotes.val().trim() === (show.notes ?? "") ? false : showNotes.val().trim(),
+                    }
+                    console.log(changes)
+                    
+                    let checkChanges = Object.entries(changes).filter(n => n[1] !== false);
+                    if (checkChanges.length !== 0) {
+                        
+                        db.transaction('rw', db.shows, () => {
+                            return db.shows.where({id: show.id}).modify(_show => {
+                                checkChanges.forEach(n => {
+                                    let key = n[0],
+                                        value = n[1];
+                                    
+                                    console.log(key, value);
+                                    if ((key === "rating" && value === 0) || (key === "notes" && value === "")) {
+                                        delete _show[key]
+                                    } else {
+                                        _show[key] = value;
+                                    }
+                                    
+                                });
+                                console.log('final', _show);
+                            })
+                        }).then(changes => {
+                            console.log('changes commit', changes);
+                            
+                            
+                            if (changes === 1) {
+                                db.shows.get({id: show.id}).then(show => {
+                                    $t.prop('Fragment').back();
+                                    
+                                    
+                                    Fragment.select('show-info').push({
+                                        name: "show-interface",
+                                        params: {show: show}
+                                    }, show.name);
+                                })
+                            } else alert('unexpected results, changes is not 1');
+                            
+                            
+                        }).catch(err => {
+                            // Transaction aborted. NOT WITHIN ZONE!
+                            console.log('err', err);
+                        });
+                        
+                    } else {
+                        console.log('no changes');
+                    }
+                });
+                
+            }, show.name + "'s user preferences");
+            
+        }
+    }, {
         name: 'Preferences',
-        icon: 'fa-solid fa-gear',
+        icon: 'fa-regular fa-bars-progress',
         action: function () {
             const MoreOptionsFragment = Fragment.select('show-info');
             MoreOptionsFragment.push(function () {
@@ -605,6 +679,173 @@ Fragment.plant('show-interface', function (params) {
                             }, show.name + "'s poster");
                             break;
                         }
+                        case 'edit-show': {
+                            Fragment.select('show-info').push(function () {
+                                let $t = $(this);
+                                $t.html(templates['show-edit-form'].cloneNode(1));
+                                let showId = $t.find('#edit-show-id'),
+                                    showAdded = $t.find('#edit-show-added'),
+                                    showName = $t.find('#edit-show-name'),
+                                    showType = $t.find('#edit-show-type'),
+                                    showAired = $t.find('#edit-show-aired'),
+                                    showSummary = $t.find('#edit-show-summary'),
+                                    showSeasonsCount = $t.find('#edit-show-seasons-count'),
+                                    showStatus = $t.find('#edit-show-status');
+                                
+                                showId.val(show.id);
+                                showAdded.val(Helper.formatDate(show.added));
+                                showName.val(show.name);
+                                showType.val(show.type);
+                                showAired.val(show.aired ? Helper.formatDate(show.aired) : "");
+                                showSummary.val(show.summary ?? "");
+                                showSeasonsCount.val(show.seasonsCount ?? "");
+                                showStatus.val(show.status ?? "");
+                                
+                                
+                                $t.find('#show-edit-form').submit(function () {
+                                    let changes = {
+                                        name: showName.val().trim() === show.name ? false : showName.val().trim(),
+                                        type: showType.val() === show.type ? false : showType.val(),
+                                        aired: new Date(showAired.val()).getTime() === show.aired?.getTime() ? false : new Date(showAired.val()),
+                                        summary: showSummary.val().trim() === (show.summary ?? "") ? false : showSummary.val().trim(),
+                                        seasonsCount: isNaN(parseInt(showSeasonsCount.val())) || parseInt(showSeasonsCount.val()) === show.seasonsCount ? (showSeasonsCount.val().trim() === "" ? 0 : false) : parseInt(showSeasonsCount.val()),
+                                        status: showStatus.val() === (show.status ?? "") ? false : showStatus.val()
+                                    }
+                                    console.log(changes)
+                                    
+                                    let checkChanges = Object.entries(changes).filter(n => n[1] !== false);
+                                    if (checkChanges.length !== 0) {
+                                        db.transaction('rw', db.shows, db.seasons, () => {
+                                            return new Dexie.Promise(async (resolve, reject) => {
+                                                
+                                                // WARNING: this type of modification only works when we know that we are editing single item
+                                                
+                                                let _show = await db.shows.get({id: show.id});
+                                                
+                                                // we use for of loop because it does support async waiting
+                                                // in this loop we do the async work and edit other tables
+                                                for (const n of checkChanges) {
+                                                    console.log('loop', n[0]);
+                                                    let key = n[0],
+                                                        value = n[1];
+                                                    
+                                                    console.log(key, value);
+                                                    
+                                                    if (key === 'seasonsCount') {
+                                                        console.log('old seasonsCount', show.seasonsCount);
+                                                        if (value === 0) {
+                                                            delete _show[key]
+                                                        } else if (value > show.seasonsCount) {
+                                                            let collection = db.seasons.where({showId: show.id}),
+                                                                numOfCollectionsFound = await collection.count();
+                                                            
+                                                            // check if data are accurate
+                                                            if (numOfCollectionsFound === show.seasonsCount) {
+                                                                console.log('data are accurate (add)');
+                                                                
+                                                                let addCount = value - show.seasonsCount;
+                                                                console.log("we added seasons, old: " + show.seasonsCount + ' new: ' + value);
+                                                                console.log('number of added seasons', addCount)
+                                                                
+                                                                let itemsToAdd = Array(addCount).fill().map((elem, index) => ({
+                                                                    showId: show.id,
+                                                                    position: show.seasonsCount + (index + 1),
+                                                                    added: new Date()
+                                                                }));
+                                                                console.log(itemsToAdd);
+                                                                let addingSeasons = await db.seasons.bulkAdd(itemsToAdd);
+                                                                
+                                                                console.log('addingSeasons', addingSeasons);
+                                                                
+                                                                _show[key] = value;
+                                                                
+                                                            } else {
+                                                                return reject('The number of the show\'s seasons is not same as stated in its details');
+                                                            }
+                                                        } else if (value < show.seasonsCount) {
+                                                            let deleteCount = show.seasonsCount - value;
+                                                            
+                                                            if (confirm('by saving the changes you going to delete last ' + deleteCount + ' seasons of "' + show.name + '"')) {
+                                                                console.log('it is ok to delete');
+                                                                
+                                                                
+                                                                let collection = db.seasons.where({showId: show.id}).offset(value),
+                                                                    numOfCollectionsFoundUsingOffset = await collection.count();
+                                                                
+                                                                
+                                                                // check if data are accurate
+                                                                if (numOfCollectionsFoundUsingOffset === deleteCount) {
+                                                                    console.log('data are accurate (delete)');
+                                                                    
+                                                                    let deletingItems = await collection.delete();
+                                                                    
+                                                                    console.log('deletingItems', deletingItems);
+                                                                    _show[key] = value;
+                                                                } else {
+                                                                    return reject('The number of the show\'s seasons is not same as stated in its details');
+                                                                }
+                                                            } else {
+                                                                return reject("changes are not saved, canceled on seasonsCount")
+                                                            }
+                                                        } else {
+                                                            return reject("unexpected outcome")
+                                                        }
+                                                    } else {
+                                                        _show[key] = value;
+                                                    }
+                                                }
+                                                
+                                                // The logic here is to wait for the previous loop to do all the changes needed to other tables
+                                                // and do other async work, then if it did not face any error we commit using resolve function
+                                                // This is because Dexie.modify does not support async jobs
+                                                resolve(db.shows.where({id: show.id}).modify(s => {
+                                                    for (const n of checkChanges) {
+                                                        let key = n[0];
+                                                        console.log('saving', key, n[1]);
+                                                        s[key] = n[1];
+                                                    }
+                                                }));
+                                                
+                                            });
+                                        }).then(changes => {
+                                            
+                                            console.log("Then is hit");
+                                            
+                                            // changes should always be 1 because we editing one item
+                                            if (changes === 1) {
+                                                db.shows.get({id: show.id}).then(show => {
+                                                    // Fragment.select('show-editor').back();
+                                                    $t.prop('Fragment').back();
+                                                    
+                                                    let newCard = generateShowCard(show);
+                                                    document.querySelectorAll('.show-card[data-show-id="' + show.id + '"]').forEach(c => {
+                                                        c.replaceWith(newCard);
+                                                    })
+                                                    
+                                                    
+                                                    Fragment.select('show-info').push({
+                                                        name: "show-interface",
+                                                        params: {show: show}
+                                                    }, show.name);
+                                                    
+                                                })
+                                            } else alert('changes is not 1 as expected');
+                                            
+                                        }).catch(err => {
+                                            // Transaction aborted. NOT WITHIN ZONE!
+                                            console.warn('err', err);
+                                            console.log([err]);
+                                            alert('not saved: ' + (err.message || err));
+                                        });
+                                        
+                                    } else {
+                                        console.log('no changes');
+                                        $t.prop('Fragment').back();
+                                    }
+                                });
+                            }, show.name);
+                            break;
+                        }
                         default: {
                             alert('action not found');
                         }
@@ -613,6 +854,8 @@ Fragment.plant('show-interface', function (params) {
             }, "More options");
         }
     }])
+    self.setNavStyle('red500');
+    self.id = "show-interface";
     
     let showViewer = templates['showViewer'].cloneNode(1);
     $t.off().html(showViewer);
@@ -634,250 +877,15 @@ Fragment.plant('show-interface', function (params) {
     
     console.log('show', show);
     
-    $t.on('click', '#show-edit', function () {
-        // load mage
+    if (show.summary) {
+        let titleElem = create('h2', 'title fs-4');
+        titleElem.textContent = 'Summary';
         
-        // show edit fragment
-        Fragment.select('show-info').push(function () {
-            let $t = $(this);
-            $t.html(templates['show-edit-form'].cloneNode(1));
-            let showId = $t.find('#edit-show-id'),
-                showAdded = $t.find('#edit-show-added'),
-                showName = $t.find('#edit-show-name'),
-                showType = $t.find('#edit-show-type'),
-                showAired = $t.find('#edit-show-aired'),
-                showSummary = $t.find('#edit-show-summary'),
-                showSeasonsCount = $t.find('#edit-show-seasons-count'),
-                showStatus = $t.find('#edit-show-status');
-            
-            showId.val(show.id);
-            showAdded.val(Helper.formatDate(show.added));
-            showName.val(show.name);
-            showType.val(show.type);
-            showAired.val(show.aired ? Helper.formatDate(show.aired) : "");
-            showSummary.val(show.summary ?? "");
-            showSeasonsCount.val(show.seasonsCount ?? "");
-            showStatus.val(show.status ?? "");
-            
-            
-            $t.find('#show-edit-form').submit(function () {
-                let changes = {
-                    name: showName.val().trim() === show.name ? false : showName.val().trim(),
-                    type: showType.val() === show.type ? false : showType.val(),
-                    aired: new Date(showAired.val()).getTime() === show.aired?.getTime() ? false : new Date(showAired.val()),
-                    summary: showSummary.val().trim() === (show.summary ?? "") ? false : showSummary.val().trim(),
-                    seasonsCount: isNaN(parseInt(showSeasonsCount.val())) || parseInt(showSeasonsCount.val()) === show.seasonsCount ? (showSeasonsCount.val().trim() === "" ? 0 : false) : parseInt(showSeasonsCount.val()),
-                    status: showStatus.val() === (show.status ?? "") ? false : showStatus.val()
-                }
-                console.log(changes)
-                
-                let checkChanges = Object.entries(changes).filter(n => n[1] !== false);
-                if (checkChanges.length !== 0) {
-                    db.transaction('rw', db.shows, db.seasons, () => {
-                        return new Dexie.Promise(async (resolve, reject) => {
-                            
-                            // WARNING: this type of modification only works when we know that we are editing single item
-                            
-                            let _show = await db.shows.get({id: show.id});
-                            
-                            // we use for of loop because it does support async waiting
-                            // in this loop we do the async work and edit other tables
-                            for (const n of checkChanges) {
-                                console.log('loop', n[0]);
-                                let key = n[0],
-                                    value = n[1];
-                                
-                                console.log(key, value);
-                                
-                                if (key === 'seasonsCount') {
-                                    console.log('old seasonsCount', show.seasonsCount);
-                                    if (value === 0) {
-                                        delete _show[key]
-                                    } else if (value > show.seasonsCount) {
-                                        let collection = db.seasons.where({showId: show.id}),
-                                            numOfCollectionsFound = await collection.count();
-                                        
-                                        // check if data are accurate
-                                        if (numOfCollectionsFound === show.seasonsCount) {
-                                            console.log('data are accurate (add)');
-                                            
-                                            let addCount = value - show.seasonsCount;
-                                            console.log("we added seasons, old: " + show.seasonsCount + ' new: ' + value);
-                                            console.log('number of added seasons', addCount)
-                                            
-                                            let itemsToAdd = Array(addCount).fill().map((elem, index) => ({
-                                                showId: show.id,
-                                                position: show.seasonsCount + (index + 1),
-                                                added: new Date()
-                                            }));
-                                            console.log(itemsToAdd);
-                                            let addingSeasons = await db.seasons.bulkAdd(itemsToAdd);
-                                            
-                                            console.log('addingSeasons', addingSeasons);
-                                            
-                                            _show[key] = value;
-                                            
-                                        } else {
-                                            return reject('The number of the show\'s seasons is not same as stated in its details');
-                                        }
-                                    } else if (value < show.seasonsCount) {
-                                        let deleteCount = show.seasonsCount - value;
-                                        
-                                        if (confirm('by saving the changes you going to delete last ' + deleteCount + ' seasons of "' + show.name + '"')) {
-                                            console.log('it is ok to delete');
-                                            
-                                            
-                                            let collection = db.seasons.where({showId: show.id}).offset(value),
-                                                numOfCollectionsFoundUsingOffset = await collection.count();
-                                            
-                                            
-                                            // check if data are accurate
-                                            if (numOfCollectionsFoundUsingOffset === deleteCount) {
-                                                console.log('data are accurate (delete)');
-                                                
-                                                let deletingItems = await collection.delete();
-                                                
-                                                console.log('deletingItems', deletingItems);
-                                                _show[key] = value;
-                                            } else {
-                                                return reject('The number of the show\'s seasons is not same as stated in its details');
-                                            }
-                                        } else {
-                                            return reject("changes are not saved, canceled on seasonsCount")
-                                        }
-                                    } else {
-                                        return reject("unexpected outcome")
-                                    }
-                                } else {
-                                    _show[key] = value;
-                                }
-                            }
-                            
-                            // The logic here is to wait for the previous loop to do all the changes needed to other tables
-                            // and do other async work, then if it did not face any error we commit using resolve function
-                            // This is because Dexie.modify does not support async jobs
-                            resolve(db.shows.where({id: show.id}).modify(s => {
-                                for (const n of checkChanges) {
-                                    let key = n[0];
-                                    console.log('saving', key, n[1]);
-                                    s[key] = n[1];
-                                }
-                            }));
-                            
-                        });
-                    }).then(changes => {
-                        
-                        console.log("Then is hit");
-                        
-                        // changes should always be 1 because we editing one item
-                        if (changes === 1) {
-                            db.shows.get({id: show.id}).then(show => {
-                                // Fragment.select('show-editor').back();
-                                $t.prop('Fragment').back();
-                                
-                                let newCard = generateShowCard(show);
-                                document.querySelectorAll('.show-card[data-show-id="' + show.id + '"]').forEach(c => {
-                                    c.replaceWith(newCard);
-                                })
-                                
-                                // Drawer.open('show-info', show);
-                                Fragment.select('show-info').push({
-                                    name: "show-interface",
-                                    params: {show: show}
-                                }, show.name);
-                                
-                            })
-                        } else alert('changes is not 1 as expected');
-                        
-                    }).catch(err => {
-                        // Transaction aborted. NOT WITHIN ZONE!
-                        console.warn('err', err);
-                        console.log([err]);
-                        alert('not saved: ' + (err.message || err));
-                    });
-                    
-                } else {
-                    console.log('no changes');
-                    $t.prop('Fragment').back();
-                }
-            });
-        }, show.name);
-        
-    });
-    $t.on('click', '#show-classify', function () {
-        // load mage
-        
-        // show edit fragment
-        Fragment.select('show-info').push(function () {
-            let $t = $(this);
-            $t.html(templates['classify-show'].cloneNode(1));
-            
-            let showUserStatus = $t.find('#edit-show-userStatus'),
-                showRating = $t.find('#edit-show-rating'),
-                showNotes = $t.find('#edit-show-notes');
-            
-            showUserStatus.val(show.userStatus ?? "");
-            showRating.val(show.rating ?? "");
-            showNotes.val(show.notes ?? "");
-            
-            
-            $t.find('#classify-show').submit(function () {
-                let changes = {
-                    userStatus: showUserStatus.val() === show.userStatus || (showUserStatus.val().trim() === "" && !show.userStatus) ? false : showUserStatus.val(),
-                    rating: isNaN(parseInt(showRating.val())) || parseInt(showRating.val()) === show.rating ? (showRating.val().trim() === "" && show.rating !== undefined ? 0 : false) : parseInt(showRating.val()),
-                    notes: showNotes.val().trim() === (show.notes ?? "") ? false : showNotes.val().trim(),
-                }
-                console.log(changes)
-                
-                let checkChanges = Object.entries(changes).filter(n => n[1] !== false);
-                if (checkChanges.length !== 0) {
-                    
-                    db.transaction('rw', db.shows, () => {
-                        return db.shows.where({id: show.id}).modify(_show => {
-                            checkChanges.forEach(n => {
-                                let key = n[0],
-                                    value = n[1];
-                                
-                                console.log(key, value);
-                                if ((key === "rating" && value === 0) || (key === "notes" && value === "")) {
-                                    delete _show[key]
-                                } else {
-                                    _show[key] = value;
-                                }
-                                
-                            });
-                            console.log('final', _show);
-                        })
-                    }).then(changes => {
-                        console.log('changes commit', changes);
-                        
-                        
-                        if (changes === 1) {
-                            db.shows.get({id: show.id}).then(show => {
-                                $t.prop('Fragment').back();
-                                
-                                // Drawer.open('show-info', show);
-                                Fragment.select('show-info').push({
-                                    name: "show-interface",
-                                    params: {show: show}
-                                }, show.name);
-                            })
-                        } else alert('unexpected results, changes is not 1');
-                        
-                        
-                    }).catch(err => {
-                        // Transaction aborted. NOT WITHIN ZONE!
-                        console.log('err', err);
-                    });
-                    
-                } else {
-                    console.log('no changes');
-                }
-            });
-            
-        }, show.name + "'s user preferences");
-        
-    });
+        let summaryElem = create('p', 'summary');
+        summaryElem.textContent = show.summary;
+        self.append(titleElem, summaryElem);
+    }
+    
     
     db.seasons.where({showId: show.id}).toArray().then(seasons => {
         
@@ -964,9 +972,6 @@ Fragment.plant('show-interface', function (params) {
     
 });
 
-Drawer.register('show-info', function (show) {
-
-}, 1);
 
 
 let inflateAndGetObject = (data) => {
@@ -1008,7 +1013,7 @@ function generateInternalCard(type, item, seasonShow, showPoster) {
     
     let cardContent = create('div');
     if (type === 'season') {
-        cardContent.appendHTML('<h3 class="stack-in-card-title">' + (item.name || (seasonShow.name + (item.position > 1 ? ' S' + item.position : ''))) + (item.aired ? ' <span class="aired">(' + item.aired.getFullYear() + ')</span>' : '') + '</h3>')
+        cardContent.appendHTML('<h3 class="stack-in-card-title">' + (item.name || (seasonShow.name + (' S' + item.position))) + (item.aired ? ' <span class="aired">(' + item.aired.getFullYear() + ')</span>' : '') + '</h3>')
     } else {
         cardContent.appendHTML('<h3 class="stack-in-card-title">' + item.name + (item.aired ? ' <span class="aired">(' + item.aired.getFullYear() + ')</span>' : '') + '</h3>')
     }
