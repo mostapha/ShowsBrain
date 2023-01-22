@@ -296,3 +296,8 @@ nav.red500 {
     font-weight: 600;
     color: #b02a37;
 }
+
+.user-prefs-main .icon.active-star {
+    font-weight: 600;
+    color: #ffbc00;
+}

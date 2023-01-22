@@ -800,11 +800,20 @@ Fragment.plant('show-interface', function (params) {
     let userPrefs = templates['user-prefs'].cloneNode(1);
     self.append(userPrefs);
     
+    if (show.rating !== undefined) {
+        let rHelper = userPrefs.querySelector(".rating .icon-helper");
+        
+        rHelper.classList.add('fw-bolder');
+        rHelper.textContent = show.rating + "/10"
+        
+        userPrefs.querySelector(".rating .icon").classList.add('active-star');
+        
+    }
+    
     if (show.userStatus) {
         userPrefs.querySelector(".user-status .icon").classList.add(show.userStatus.toLowerCase().split(/\s+/).join('-'));
         userPrefs.querySelector(".user-status .icon-helper").textContent = show.userStatus;
     }
-    
     if (show.status) {
         userPrefs.querySelector(".status .icon").classList.add(show.status.toLowerCase().split(/\s+/).join('-'));
         userPrefs.querySelector(".status .icon-helper").textContent = show.status;
