@@ -134,8 +134,6 @@ document.querySelector('.add-show').addEventListener('click', function () {
 });
 
 
-
-
 // Fragment.select('beta-show-info').push(function(){
 //     let self = this,
 //         $t = $(self);
@@ -877,6 +875,10 @@ Fragment.plant('show-interface', function (params) {
     
     console.log('show', show);
     
+    // xxx
+    let userPrefs = templates['user-prefs'].cloneNode(1);
+    self.append(userPrefs);
+    
     if (show.summary) {
         let titleElem = create('h2', 'title fs-4');
         titleElem.textContent = 'Summary';
@@ -886,8 +888,23 @@ Fragment.plant('show-interface', function (params) {
         self.append(titleElem, summaryElem);
     }
     
+    if (show.seasonsCount) {
+        let titleElem = create('h2', 'title fs-4');
+        titleElem.textContent = 'number of seasons';
+        let p = create('p', 'value');
+        p.textContent = show.seasonsCount;
+        self.append(titleElem, p);
+    }
     
-    db.seasons.where({showId: show.id}).toArray().then(seasons => {
+    
+    const relatedShows = [show.prequel, show.sequel, show.related].flat().filter(e => e !== undefined);
+    
+    let getSeasons = db.seasons.where({showId: show.id}).toArray(),
+        getRelatedShows = relatedShows.length > 0 ? db.shows.where('id').anyOf(relatedShows).toArray() : null;
+    
+    Promise.all([getSeasons, getRelatedShows]).then(result => {
+        let [seasons, relatedShows] = result;
+        
         
         console.log('seasons', seasons);
         
@@ -899,21 +916,12 @@ Fragment.plant('show-interface', function (params) {
         titleElem.textContent = 'Parts';
         self.append(titleElem, container);
         
-    });
-    
-    
-    // related shows
-    const relatedShows = [show.prequel, show.sequel, show.related].flat().filter(e => e !== undefined);
-    
-    console.log('relatedShows', relatedShows);
-    if (relatedShows.length > 0) {
-        db.shows.where('id').anyOf(relatedShows).toArray().then(n => {
-            console.log('n', n);
-            
+        if (relatedShows) {
+            console.log('relatedShows', relatedShows);
             // we use reverse because we are using related show's data
-            let prequels = n.filter(e => e.sequel?.includes(show.id)),
-                sequels = n.filter(e => e.prequel?.includes(show.id)),
-                related = n.filter(e => e.related?.includes(show.id));
+            let prequels = relatedShows.filter(e => e.sequel?.includes(show.id)),
+                sequels = relatedShows.filter(e => e.prequel?.includes(show.id)),
+                related = relatedShows.filter(e => e.related?.includes(show.id));
             
             console.log('prequels', prequels);
             console.log('sequels', sequels);
@@ -937,41 +945,11 @@ Fragment.plant('show-interface', function (params) {
             })
             
             self.append(titleElem, container);
-        })
-    }
-    
-    // if (show.prequel) {
-    //     let container = create('div', 'stacks-in hidden-scroll mx-n3 px-3');
-    //
-    //     db.shows.where('id').anyOf(show.prequel).toArray().then(shows => {
-    //         shows.forEach((prequel, index) => {
-    //             container.append(generateInternalCard('show', prequel));
-    //         });
-    //         let titleElem = create('h2', 'title');
-    //         titleElem.textContent = 'Prequel';
-    //         self.append(titleElem, container);
-    //     })
-    // }
-    // if (show.sequel) {
-    //     console.log(('has sequel'));
-    //     console.log('show.sequel', show.sequel);
-    //
-    //     let container = create('div', 'stacks-in hidden-scroll mx-n3 px-3');
-    //
-    //     db.shows.where('id').anyOf(show.sequel).toArray().then(shows => {
-    //         shows.forEach((sequel, index) => {
-    //             container.append(generateInternalCard('show', sequel));
-    //         });
-    //         let titleElem = create('h2', 'title');
-    //         titleElem.textContent = 'Sequel';
-    //         self.append(titleElem, container);
-    //     })
-    // }
-    //
+        }
+    })
     
     
 });
-
 
 
 let inflateAndGetObject = (data) => {

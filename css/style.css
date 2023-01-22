@@ -207,3 +207,31 @@ nav.red500 {
 #show-interface p.summary {
     font-size: 15px;
 }
+
+
+
+
+.rating {
+    /* font-size: 20px; */
+}
+.user-prefs-main .col {
+    flex-direction: column;
+    align-items: center;
+    display: flex;
+}
+.user-prefs-main .separator {
+    width: 1px;
+    background: #dee2e6;
+    height: 30px;
+}
+.user-prefs-main .icon {
+    font-size: 20px !important;
+    height: 24px;
+    width: 24px;
+    line-height: 24px;
+}
+.user-prefs-main .icon-helper {
+    font-size: 14px;
+    margin-top: 0.5rem;
+    color: #495057;
+}
