@@ -40,8 +40,8 @@
 <template id="template">
 
     <div class="container-fluid g-0" data-template-name='season-header'>
-        <div class="align-self-center row">
-            <div class="col-5 mx-auto">
+        <div class="g-0 align-self-center row">
+            <div class="col-6 mx-auto">
                 <div class="global-poster poster">
                     <img alt="" data-poster="" draggable="false" loading="lazy"
                          src="images/pixel.png"/>
@@ -50,7 +50,7 @@
             <div class="col-12 mt-3 text-center">
                 <div class="card-body">
                     <small class="text-muted season-name-prefix">TV series</small>
-                    <h5 class="season-name">Game of Thrones</h5>
+                    <h5 class="season-name"></h5>
                     <p class="card-text season-name-extend"><small class="text-muted">Helper text</small></p>
                 </div>
             </div>
@@ -215,12 +215,35 @@
             </select>
         </div>
 
+        <div class="mb-3">
+            <label class="form-label" for="edit-show-language">Language</label>
+            <select class="form-select" id='edit-show-language'>
+                <option></option>
+                <option>English</option>
+                <option>Korean</option>
+                <option>Spanish</option>
+                <option>Japanese</option>
+                <option>French</option>
+                <option>Other</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="edit-show-imdb-id">IMDb id</label>
+            <input class="form-control"
+                   id="edit-show-imdb-id"
+                   onblur="this.checkValidity() ? this.classList.remove('is-invalid') : this.classList.add('is-invalid')"
+                   pattern="^tt\d+$" type="text">
+            <div class="form-text">e.g tt13406094</div>
+        </div>
+
 
         <div class="mt-4 text-end text-sm-start">
             <button class="btn btn-primary" id='edit-show-confirm' type="submit"><i class="fa-check fa-solid me-2"></i>Update
                 show
             </button>
         </div>
+
 
     </form>
 

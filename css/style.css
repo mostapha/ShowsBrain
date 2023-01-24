@@ -10,11 +10,11 @@ body {
     display: none;
 }
 
-
 .stack-title {
-    font-size: 22px;
+    font-size: 16px;
     font-weight: 700;
-    margin: 0 0 0.5em;
+    margin: 1.25em 0 1em;
+    color: #b02a37;
 }
 
 .show-list-inner {
@@ -149,6 +149,9 @@ body {
 .stacks-in-card .poster {
     width: 180px;
     padding: 258px 0 0;
+}
+.stacks-in-card.upcoming .poster img {
+    filter: blur(3px);
 }
 
 .stacks-in {
@@ -332,6 +335,8 @@ nav.red500 {
 #show-interface .poster {
     position: relative;
     z-index: 9;
+    box-shadow: 0 0px 10px 0px white;
+    border-radius: 3px;
 }
 
 .ribbon {
@@ -339,14 +344,37 @@ nav.red500 {
     z-index: 10;
     text-align: center;
     inset: 0 auto auto 0;
-    background: #b02a37;
+    background: #fff;
     transform-origin: 100% 0;
     transform: translate(-29.3%) rotate(-45deg);
-    box-shadow: 0 0 0 24px #b02a37;
+    box-shadow: 0 0 0 30px #ffffff;
     clip-path: inset(-30% -100%);
-    color: #fff;
+    color: #565656;
     font-size: 13px;
     font-weight: bold;
     padding: 0 10px;
-    text-shadow: 0 1px black;
+}
+
+
+#season-interface {
+    position: relative;
+}
+#season-interface .cover {
+    width: 100%;
+    padding-top: 50%;
+    overflow: hidden;
+    display: block;
+    height: auto;
+    outline: none;
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1;
+    background: linear-gradient(180deg, #520dc2, #0000);
+}
+#season-interface .poster {
+    position: relative;
+    z-index: 9;
+    box-shadow: 0 0 0 1px #ffffff8c;
+    border-radius: 3px;
 }

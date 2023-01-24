@@ -28,250 +28,14 @@ $(document).on('submit', 'form', function (e) {
             console.log('season:', season)
             db.shows.get({id: season.showId}).then(show => {
                 
+                
                 Fragment.select('season-info').push({
                     name: "season-interface",
                     params: {
                         season: season,
                         show: show
                     }
-                }, season.name || (show.name + " " + appendOrdinalSuffix(season.position) + ' part'), [{
-                    name: 'User preferences',
-                    icon: 'fa-regular fa-user-gear',
-                    action: function () {
-                        
-                        // show edit fragment
-                        
-                        
-                        Fragment.select('season-info').push({
-                            name: "season-classifier-plant",
-                            params: {season: season}
-                        }, "soon's user preferences");
-                        
-                    }
-                }, {
-                    name: "Add details",
-                    icon: "fa-regular fa-bars-progress",
-                    action: function () {
-                        Fragment.select('season-info').push(function () {
-                            let self = this,
-                                $self = $(self);
-                            
-                            
-                            $self.html(templates['season-edit-menu'].cloneNode(1));
-                            
-                            $self.on('click', 'button', function () {
-                                let $btn = $(this);
-                                switch ($btn.data('action')) {
-                                    case "edit-season": {
-                                        console.log('edit season');
-                                        
-                                        self.Fragment.push(function () {
-                                            
-                                            let $t = $(this);
-                                            
-                                            $t.html(templates['season-edit-form'].cloneNode(1));
-                                            
-                                            // xxx
-                                            
-                                            let seasonAired = $t.find('#edit-season-aired'),
-                                                seasonSummary = $t.find('#edit-season-summary'),
-                                                seasonEpisodesCount = $t.find('#edit-season-episodes-count'),
-                                                seasonLastWatchedEpisode = $t.find('#edit-season-last-watched-episode'),
-                                                seasonStatus = $t.find('#edit-season-status');
-                                            
-                                            seasonAired.val(season.aired ? Helper.formatDate(season.aired) : "");
-                                            seasonSummary.val(season.summary ?? "");
-                                            seasonEpisodesCount.val(season.episodesCount ?? "");
-                                            seasonLastWatchedEpisode.val(season.lastWatchedEpisode ?? "");
-                                            seasonStatus.val(season.status ?? "");
-    
-                                            
-                                            $t.find('#season-edit-form').submit(function () {
-                                                
-                                                let values = {
-                                                    aired: seasonAired.val().trim(),
-                                                    summary: seasonSummary.val().trim(),
-                                                    episodesCount: seasonEpisodesCount.val(),
-                                                    lastWatchedEpisode: seasonLastWatchedEpisode.val(),
-                                                    seasonStatus: seasonStatus.val()
-                                                }
-                                                
-                                                console.log('ss', [values.summary, (season.summary ?? ""), season.aired && values.aired === ""])
-                                              
-                                                
-                                                let changes = {
-                                                    aired: season.aired && values.aired === "" ? 0 : (new Date(values.aired).getTime() === season.aired?.getTime() ? false : new Date(values.aired)),
-                                                    summary: season.summary && values.summary === "" ? 0 : values.summary === season.summary ? false : values.summary,
-                                                    episodesCount: season.episodesCount && (isNaN(values.episodesCount) || values.episodesCount === "") ? 0 : parseInt(values.episodesCount) === season.episodesCount ? false : parseInt(values.episodesCount),
-                                                    lastWatchedEpisode: season.lastWatchedEpisode && (values.lastWatchedEpisode === "" || isNaN(values.lastWatchedEpisode)) ? 0 : parseInt(values.lastWatchedEpisode) === season.lastWatchedEpisode ? false : values.lastWatchedEpisode === "" ? 0 : parseInt(values.lastWatchedEpisode),
-                                                    status: season.status && values.seasonStatus === "" ? 0 : values.seasonStatus === season.status ? false : values.seasonStatus
-                                                }
-                                                console.log(changes)
-                                                
-                                                let checkChanges = Object.entries(changes).filter(n => n[1] !== false);
-                                                
-                                                console.log('checkChanges', checkChanges);
-                                                if (checkChanges.length !== 0) {
-                                                    db.seasons.where({id: season.id}).modify(_season => {
-                                                        for (const [key, value] of checkChanges) {
-                                                            if(value === 0){
-                                                                console.log('deleting', key);
-                                                                delete _season[key]
-                                                            } else {
-                                                                console.log('saving', key, value);
-                                                                _season[key] = value;
-                                                            }
-                                                        }
-                                                    }).then(changes => {
-
-                                                        console.log("Then is hit, changes", changes);
-                                                        $t.prop('Fragment').destroy();
-                                                        
-                                                    }).catch(err => {
-                                                        // Transaction aborted. NOT WITHIN ZONE!
-                                                        console.warn('err', err);
-                                                        console.log([err]);
-                                                        alert('not saved: ' + (err.message || err));
-                                                    });
-
-                                                } else {
-                                                    console.log('no changes');
-                                                    $t.prop('Fragment').back();
-                                                }
-                                                
-                                            });
-                                            
-                                        }, 'Edit season\'s details');
-                                        
-                                        break;
-                                    }
-                                    case "edit-season-poster": {
-                                        Fragment.select('season-info').push(function () {
-                                            let self = this,
-                                                $t = $(self);
-                                            
-                                            $t.html(templates['upload-image'].cloneNode(1));
-                                            
-                                            let $imageUrl = $t.find('#set-image-url'),
-                                                $posterImg = $t.find('.poster img');
-                                            
-                                            let $getImage = $t.find('#get-image'),
-                                                $saveBtn = $t.find('#save-image');
-                                            
-                                            $posterImg.attr('data-poster', 'season-id-' + season.id);
-                                            
-                                            if (season.poster) {
-                                                let objUrl = inflateAndGetObject(season.poster)
-                                                $posterImg[0].onload = function () {
-                                                    URL.revokeObjectURL(objUrl);
-                                                }
-                                                $posterImg[0].src = objUrl;
-                                            }
-                                            
-                                            let objectUrl;
-                                            $getImage.click(function () {
-                                                let self = this,
-                                                    $self = $(self);
-                                                
-                                                let val = $imageUrl.val();
-                                                if (val.trim() === "") {
-                                                    alert('add image url');
-                                                } else {
-                                                    $self.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
-                                                    $saveBtn.prop('disabled', true);
-                                                    
-                                                    console.log('valid url', val);
-                                                    
-                                                    if (objectUrl) {
-                                                        URL.revokeObjectURL(objectUrl);
-                                                        objectUrl = null;
-                                                    }
-                                                    
-                                                    let imgElem = create('img');
-                                                    Helper.getImage(val, true).then(blob => {
-                                                        // save it, we will use it when we confirm adding image
-                                                        
-                                                        let imageUrl = URL.createObjectURL(blob)
-                                                        
-                                                        objectUrl = imageUrl;
-                                                        
-                                                        console.log('blob', blob);
-                                                        console.log('objectUrl', imageUrl);
-                                                        
-                                                        $saveBtn.prop('disabled', false);
-                                                        $self.text('Get').prop('disabled', false);
-                                                        
-                                                        $posterImg[0].src = imageUrl
-                                                    }).catch(n => {
-                                                        console.error(n);
-                                                        $posterImg[0].attr('src', 'images/pixel.png');
-                                                        $saveBtn.prop('disabled', true);
-                                                        $self.text('Get').prop('disabled', false);
-                                                    });
-                                                    
-                                                }
-                                            })
-                                            
-                                            $saveBtn.click(function () {
-                                                console.log('set image to:', 'season' + season.id);
-                                                console.log('objectUrl', objectUrl)
-                                                
-                                                Helper.resizePoster(objectUrl).then(blob => {
-                                                    blob.arrayBuffer().then(buffer => {
-                                                        let arrayBuffer = new Uint8Array(buffer);
-                                                        db.seasons.where({id: season.id}).modify(season => {
-                                                            season.poster = pako.deflate(arrayBuffer);
-                                                        }).then(n => {
-                                                            if (n === 1) {
-                                                                document.querySelectorAll('img[data-poster="season-id-' + season.id + '"]').forEach(n => {
-                                                                    let obj = URL.createObjectURL(blob);
-                                                                    n.onload = function () {
-                                                                        URL.revokeObjectURL(obj);
-                                                                    }
-                                                                    n.src = obj
-                                                                });
-                                                                URL.revokeObjectURL(objectUrl);
-                                                                console.log('saved');
-                                                                
-                                                                $t.prop('Fragment').back();
-                                                            } else {
-                                                                alert('unexpected reach');
-                                                            }
-                                                        });
-                                                    });
-                                                });
-                                            })
-                                            
-                                            
-                                            if (undefined !== season.poster) {
-                                                let $removePoster = $t.find('#remove-poster');
-                                                $removePoster.prop('disabled', false);
-                                                $removePoster.click(function () {
-                                                    if (confirm('remove this season poster?')) {
-                                                        db.seasons.where({id: season.id}).modify(n => {
-                                                            delete n.poster;
-                                                        }).then(n => {
-                                                            console.log('poster removed', n);
-                                                        })
-                                                    }
-                                                });
-                                            }
-                                            
-                                            
-                                        }, (season.name || (show.name + " " + appendOrdinalSuffix(season.position) + " season")) + "'s poster");
-                                        
-                                        break;
-                                    }
-                                    default: {
-                                        console.log('action not found');
-                                    }
-                                }
-                            })
-                            
-                        }, "Edit season's information");
-                    }
-                }
-                ], "indigo600");
+                });
                 
             })
         } else throw "season not found";
@@ -389,7 +153,7 @@ Fragment.plant('show-interface', function (params) {
             Fragment.select('show-info').push({
                 name: "show-classifier-plant",
                 params: {show: show}
-            }, show.name + "'s user preferences");
+            });
             
         }
     }, {
@@ -865,7 +629,7 @@ Fragment.plant('show-interface', function (params) {
                                 params: {
                                     show: show
                                 }
-                            }, show.name);
+                            });
                             break;
                         }
                         default: {
@@ -902,7 +666,7 @@ Fragment.plant('show-interface', function (params) {
     
     console.log('show', show);
     
-    // xxx
+    
     let userPrefs = templates['user-prefs'].cloneNode(1);
     self.append(userPrefs);
     
@@ -951,8 +715,6 @@ Fragment.plant('show-interface', function (params) {
     Promise.all([getSeasons, getRelatedShows]).then(result => {
         let [seasons, relatedShows] = result;
         
-        
-        console.log('seasons', seasons);
         
         let container = create('div', 'stacks-in hidden-scroll mx-n3 px-3 mb-4');
         seasons.forEach((season, index) => {
@@ -1004,7 +766,6 @@ Fragment.plant('show-interface', function (params) {
     
     
     $t.find('#quick-show-status').click(function () {
-        console.log('xxx', $t.prop('Fragment'));
         Fragment.select($t.prop('Fragment')).push({
             name: 'show-edit-plant',
             params: {show: show}
@@ -1021,10 +782,13 @@ Fragment.plant('show-interface', function (params) {
 });
 
 Fragment.plant('show-classifier-plant', function (params) {
-    // xxx
+    
     const show = params.show;
     
     let $t = $(this);
+    
+    this.setTitle('User preferences');
+    
     $t.html(templates['classify-show'].cloneNode(1));
     
     let showUserStatus = $t.find('#edit-show-userStatus'),
@@ -1087,12 +851,14 @@ Fragment.plant('show-classifier-plant', function (params) {
             
         } else {
             console.log('no changes');
+            $t.prop('Fragment').back();
         }
     });
     
 });
+
 Fragment.plant('season-classifier-plant', function (params) {
-    // xxx
+    
     const season = params.season;
     
     let $t = $(this);
@@ -1137,12 +903,13 @@ Fragment.plant('season-classifier-plant', function (params) {
             }).then(changes => {
                 console.log('changes commit', changes);
                 
-                
                 if (changes === 1) {
                     Promise.all([db.shows.get({id: season.showId}), db.seasons.get({id: season.id})]).then(result => {
                         let [show, season] = result;
-                        
-                        $t.prop('Fragment').destroy();
+    
+                        Fragment.select('season-info').destroy();
+    
+                        console.log("season after update", structuredClone(season))
                         Fragment.select('season-info').push({
                             name: "season-interface",
                             params: {
@@ -1163,10 +930,14 @@ Fragment.plant('season-classifier-plant', function (params) {
     });
     
 });
+
 Fragment.plant("show-edit-plant", function (params) {
     const show = params.show;
     
     let $t = $(this);
+    
+    this.setTitle("Edit " + show.name);
+    
     $t.html(templates['show-edit-form'].cloneNode(1));
     
     let showId = $t.find('#edit-show-id'),
@@ -1176,7 +947,9 @@ Fragment.plant("show-edit-plant", function (params) {
         showAired = $t.find('#edit-show-aired'),
         showSummary = $t.find('#edit-show-summary'),
         showSeasonsCount = $t.find('#edit-show-seasons-count'),
-        showStatus = $t.find('#edit-show-status');
+        showStatus = $t.find('#edit-show-status'),
+        showLanguage = $t.find('#edit-show-language'),
+        showIMDbId = $t.find('#edit-show-imdb-id');
     
     showId.val(show.id);
     showAdded.val(Helper.formatDate(show.added));
@@ -1187,19 +960,31 @@ Fragment.plant("show-edit-plant", function (params) {
     showSeasonsCount.val(show.seasonsCount ?? "");
     showStatus.val(show.status ?? "");
     
+    showLanguage.val(show.language ?? "");
+    showIMDbId.val(show.IMDbId ?? "");
+    
     
     $t.find('#show-edit-form').submit(function () {
-    
+        
         console.log('current show', show);
         
         let changes = {
             name: showName.val().trim() === show.name ? false : showName.val().trim(),
+            
             type: showType.val() === show.type ? false : showType.val(),
+            
             aired: showAired.val() === "" ? (show.aired ? 0 : false) : new Date(showAired.val()).getTime() === show.aired?.getTime() ? false : new Date(showAired.val()),
-            summary: showSummary.val().trim() === (show.summary ?? "") ? false : showSummary.val().trim(),
-            seasonsCount: isNaN(parseInt(showSeasonsCount.val())) || parseInt(showSeasonsCount.val()) === show.seasonsCount ? (showSeasonsCount.val().trim() === "" ? 0 : false) : parseInt(showSeasonsCount.val()),
-            status: showStatus.val() === (show.status ?? "") ? false : showStatus.val()
+            
+            summary: showSummary.val().trim() === "" ? (show.summary ? 0 : false) : (showSummary.val() === show.summary ? false : showSummary.val().trim()),
+            
+            seasonsCount: showSeasonsCount.val() === "" ? (show.seasonsCount !== undefined ? 0 : false) : (parseInt(showSeasonsCount.val()) === show.seasonsCount ? false : parseInt(showSeasonsCount.val())),
+            
+            status: showStatus.val() === "" ? (show.status ? 0 : false) : (showStatus.val() === show.status ? false : showStatus.val()),
+            language: showLanguage.val() === "" ? (show.language ? 0 : false) : (showLanguage.val() === show.language ? false : showLanguage.val()),
+            IMDbId: showIMDbId.val() === "" ? (show.IMDbId ? 0 : false) : (showIMDbId.val() === show.IMDbId ? false : showIMDbId.val())
         }
+        
+        console.log("CHANGES:===============")
         console.log(changes)
         
         let checkChanges = Object.entries(changes).filter(n => n[1] !== false);
@@ -1280,7 +1065,7 @@ Fragment.plant("show-edit-plant", function (params) {
                                 return reject("unexpected outcome")
                             }
                         } else {
-                            if(value === 0){
+                            if (value === 0) {
                                 delete _show[key]
                             } else _show[key] = value;
                             
@@ -1294,7 +1079,7 @@ Fragment.plant("show-edit-plant", function (params) {
                         for (const [key, value] of checkChanges) {
                             
                             console.log('saving', key, value);
-                            if(value === 0){
+                            if (value === 0) {
                                 delete s[key]
                             } else s[key] = value
                             
@@ -1351,6 +1136,175 @@ Fragment.plant('season-interface', function (params) {
         $t = $(self);
     
     self.id = "season-interface";
+    self.registerNavAction([{
+        name: 'User preferences',
+        icon: 'fa-regular fa-user-gear',
+        action: function () {
+            
+            // show edit fragment
+            
+            
+            Fragment.select('season-info').push({
+                name: "season-classifier-plant",
+                params: {season: season}
+            }, "soon's user preferences");
+            
+        }
+    }, {
+        name: "Add details",
+        icon: "fa-regular fa-bars-progress",
+        action: function () {
+            Fragment.select('season-info').push(function () {
+                let self = this,
+                    $self = $(self);
+                
+                
+                $self.html(templates['season-edit-menu'].cloneNode(1));
+                
+                $self.on('click', 'button', function () {
+                    let $btn = $(this);
+                    switch ($btn.data('action')) {
+                        case "edit-season": {
+                            console.log('edit season');
+                            
+                            self.Fragment.push({
+                                name: 'season-edit-plant',
+                                params: {
+                                    season: season,
+                                    show: show
+                                }
+                            });
+                            
+                            break;
+                        }
+                        case "edit-season-poster": {
+                            Fragment.select('season-info').push(function () {
+                                let self = this,
+                                    $t = $(self);
+                                
+                                $t.html(templates['upload-image'].cloneNode(1));
+                                
+                                let $imageUrl = $t.find('#set-image-url'),
+                                    $posterImg = $t.find('.poster img');
+                                
+                                let $getImage = $t.find('#get-image'),
+                                    $saveBtn = $t.find('#save-image');
+                                
+                                $posterImg.attr('data-poster', 'season-id-' + season.id);
+                                
+                                if (season.poster) {
+                                    let objUrl = inflateAndGetObject(season.poster)
+                                    $posterImg[0].onload = function () {
+                                        URL.revokeObjectURL(objUrl);
+                                    }
+                                    $posterImg[0].src = objUrl;
+                                }
+                                
+                                let objectUrl;
+                                $getImage.click(function () {
+                                    let self = this,
+                                        $self = $(self);
+                                    
+                                    let val = $imageUrl.val();
+                                    if (val.trim() === "") {
+                                        alert('add image url');
+                                    } else {
+                                        $self.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+                                        $saveBtn.prop('disabled', true);
+                                        
+                                        console.log('valid url', val);
+                                        
+                                        if (objectUrl) {
+                                            URL.revokeObjectURL(objectUrl);
+                                            objectUrl = null;
+                                        }
+                                        
+                                        let imgElem = create('img');
+                                        Helper.getImage(val, true).then(blob => {
+                                            // save it, we will use it when we confirm adding image
+                                            
+                                            let imageUrl = URL.createObjectURL(blob)
+                                            
+                                            objectUrl = imageUrl;
+                                            
+                                            console.log('blob', blob);
+                                            console.log('objectUrl', imageUrl);
+                                            
+                                            $saveBtn.prop('disabled', false);
+                                            $self.text('Get').prop('disabled', false);
+                                            
+                                            $posterImg[0].src = imageUrl
+                                        }).catch(n => {
+                                            console.error(n);
+                                            $posterImg[0].attr('src', 'images/pixel.png');
+                                            $saveBtn.prop('disabled', true);
+                                            $self.text('Get').prop('disabled', false);
+                                        });
+                                        
+                                    }
+                                })
+                                
+                                $saveBtn.click(function () {
+                                    console.log('set image to:', 'season' + season.id);
+                                    console.log('objectUrl', objectUrl)
+                                    
+                                    Helper.resizePoster(objectUrl).then(blob => {
+                                        blob.arrayBuffer().then(buffer => {
+                                            let arrayBuffer = new Uint8Array(buffer);
+                                            db.seasons.where({id: season.id}).modify(season => {
+                                                season.poster = pako.deflate(arrayBuffer);
+                                            }).then(n => {
+                                                if (n === 1) {
+                                                    document.querySelectorAll('img[data-poster="season-id-' + season.id + '"]').forEach(n => {
+                                                        let obj = URL.createObjectURL(blob);
+                                                        n.onload = function () {
+                                                            URL.revokeObjectURL(obj);
+                                                        }
+                                                        n.src = obj
+                                                    });
+                                                    URL.revokeObjectURL(objectUrl);
+                                                    console.log('saved');
+                                                    
+                                                    $t.prop('Fragment').back();
+                                                } else {
+                                                    alert('unexpected reach');
+                                                }
+                                            });
+                                        });
+                                    });
+                                })
+                                
+                                
+                                if (undefined !== season.poster) {
+                                    let $removePoster = $t.find('#remove-poster');
+                                    $removePoster.prop('disabled', false);
+                                    $removePoster.click(function () {
+                                        if (confirm('remove this season poster?')) {
+                                            db.seasons.where({id: season.id}).modify(n => {
+                                                delete n.poster;
+                                            }).then(n => {
+                                                console.log('poster removed', n);
+                                            })
+                                        }
+                                    });
+                                }
+                                
+                                
+                            }, (season.name || (show.name + " " + appendOrdinalSuffix(season.position) + " season")) + "'s poster");
+                            
+                            break;
+                        }
+                        default: {
+                            console.log('action not found');
+                        }
+                    }
+                })
+                
+            }, "Edit season's information");
+        }
+    }]);
+    self.setNavStyle('indigo600');
+    self.setTitle(season.name || (show.name + " " + appendOrdinalSuffix(season.position) + ' part'))
     
     let drawing = $(templates['season-header'].cloneNode(true));
     
@@ -1363,6 +1317,8 @@ Fragment.plant('season-interface', function (params) {
     }
     
     $t.html(drawing);
+    
+    $t.append('<div class="cover"></div>');
     
     
     let $posterImg = $t.find('.poster img');
@@ -1417,7 +1373,107 @@ Fragment.plant('season-interface', function (params) {
     }
     
     
+    $t.find('#quick-show-status').click(function () {
+        Fragment.select($t.prop('Fragment')).push({
+            name: 'season-edit-plant',
+            params: {
+                season: season,
+                show: show
+            }
+        })
+    });
+    
+    $t.find('#quick-user-status').click(function () {
+        Fragment.select($t.prop('Fragment')).push({
+            name: 'season-classifier-plant',
+            params: {show: show, season: season}
+        })
+    });
 })
+
+Fragment.plant("season-edit-plant", function (params) {
+    const season = params.season,
+        show = params.show;
+    
+    let self = this,
+        $t = $(self);
+    
+    self.setTitle('Edit season\'s details');
+    
+    $t.html(templates['season-edit-form'].cloneNode(1));
+    
+    
+    let seasonAired = $t.find('#edit-season-aired'),
+        seasonSummary = $t.find('#edit-season-summary'),
+        seasonEpisodesCount = $t.find('#edit-season-episodes-count'),
+        seasonLastWatchedEpisode = $t.find('#edit-season-last-watched-episode'),
+        seasonStatus = $t.find('#edit-season-status');
+    
+    seasonAired.val(season.aired ? Helper.formatDate(season.aired) : "");
+    seasonSummary.val(season.summary ?? "");
+    seasonEpisodesCount.val(season.episodesCount ?? "");
+    seasonLastWatchedEpisode.val(season.lastWatchedEpisode ?? "");
+    seasonStatus.val(season.status ?? "");
+    
+    
+    $t.find('#season-edit-form').submit(function () {
+        
+        
+        let changes = {
+            aired: seasonAired.val() === "" ? (season.aired ? 0 : false) : new Date(seasonAired.val()).getTime() === season.aired?.getTime() ? false : new Date(seasonAired.val()),
+            summary: seasonSummary.val().trim() === "" ? (season.summary ? 0 : false) : (seasonSummary.val() === season.summary ? false : seasonSummary.val().trim()),
+            episodesCount: seasonEpisodesCount.val() === "" ? (season.episodesCount !== undefined ? 0 : false) : (parseInt(seasonEpisodesCount.val()) === season.episodesCount ? false : parseInt(seasonEpisodesCount.val())),
+            lastWatchedEpisode: seasonLastWatchedEpisode.val() === "" ? (season.lastWatchedEpisode !== undefined ? 0 : false) : (parseInt(seasonLastWatchedEpisode.val()) === season.lastWatchedEpisode ? false : parseInt(seasonLastWatchedEpisode.val())),
+            status: seasonStatus.val() === "" ? (season.status ? 0 : false) : (seasonStatus.val() === season.status ? false : seasonStatus.val())
+        }
+        
+        console.log(changes)
+        
+        let checkChanges = Object.entries(changes).filter(n => n[1] !== false);
+        
+        console.log('checkChanges', checkChanges);
+        if (checkChanges.length !== 0) {
+            db.seasons.where({id: season.id}).modify(_season => {
+                for (const [key, value] of checkChanges) {
+                    if (value === 0) {
+                        console.log('deleting', key);
+                        delete _season[key]
+                    } else {
+                        console.log('saving', key, value);
+                        _season[key] = value;
+                    }
+                }
+            }).then(changes => {
+                
+                console.log("Then is hit, changes", changes);
+                
+                db.seasons.get({id: season.id}).then(season => {
+                    $t.prop('Fragment').clear();
+                    console.log('cleared');
+                    $t.prop('Fragment').push({
+                        name: "season-interface",
+                        params: {
+                            season: season,
+                            show: show
+                        }
+                    });
+                })
+                
+            }).catch(err => {
+                // Transaction aborted. NOT WITHIN ZONE!
+                console.warn('err', err);
+                console.log([err]);
+                alert('not saved: ' + (err.message || err));
+            });
+            
+        } else {
+            console.log('no changes');
+            $t.prop('Fragment').back();
+        }
+        
+    });
+    
+});
 
 
 let inflateAndGetObject = (data) => {
@@ -1443,7 +1499,7 @@ function generateShowCard(show) {
 }
 
 function generateInternalCard(type, item, seasonShow, showPoster, numberOfSeasons) {
-    let showCard = create('div', (type === 'season' ? 'season-card ' : 'show-card ') + 'stacks-in-card');
+    let showCard = create('div', (type === 'season' ? 'season-card ' : 'show-card ') + 'stacks-in-card' + (item.status === "upcoming" ? ' upcoming' : ""));
     
     if (type === 'season') {
         showCard.dataset.seasonId = item.id;
@@ -1452,10 +1508,11 @@ function generateInternalCard(type, item, seasonShow, showPoster, numberOfSeason
     }
     
     if (type === "season") {
-        showCard.appendHTML('<div class="global-poster poster"><img draggable="false" alt="" class="posterImage" loading="lazy" data-poster="' + ('season-id-' + item.id) + '" src="' + (item.poster ? inflateAndGetObject(item.poster) : (showPoster ? showPoster : "images/pixel.png")) + '"/></div>');
+        showCard.appendHTML('<div class="global-poster poster">' + (item.status === "upcoming" ? '<span class="ribbon">Upcoming</span>' : "") + '<img draggable="false" alt="" class="posterImage" loading="lazy" data-poster="' + ('season-id-' + item.id) + '" src="' + (item.poster ? inflateAndGetObject(item.poster) : (showPoster ? showPoster : "images/pixel.png")) + '"/></div>');
     } else {
         showCard.appendHTML('<div class="global-poster poster"><img draggable="false" alt="" class="posterImage" loading="lazy" data-poster="show-id-' + item.id + '" src="' + (item.poster ? inflateAndGetObject(item.poster) : "images/pixel.png") + '"/></div>');
     }
+    
     
     let cardContent = create('div');
     if (type === 'season') {

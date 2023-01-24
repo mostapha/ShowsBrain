@@ -47,7 +47,10 @@ const Fragment = (() => {
             this.frag.append(template);
             this.#stack.push(template);
             
-            template.querySelector('.fragment-title').textContent = title || "";
+            if(title){
+                template.querySelector('.fragment-title').textContent = title;
+            }
+            
             template.querySelector('.fragment-back').onclick = function () {
                 self.back();
             }
@@ -62,12 +65,9 @@ const Fragment = (() => {
             }
             
             function initNavActions(navActions) {
-    
-                console.log('initNavActions', navActions);
                 
                 let navActionsElem = template.querySelector('.nav-actions')
                 navActions.forEach(navAction => {
-                    console.log('navAction', navAction);
                     let btn = create('button', {
                         className: 'btn',
                         innerHTML: '<i class="' + navAction.icon + '"></i>',
@@ -106,7 +106,9 @@ const Fragment = (() => {
             template.lastElementChild.setNavStyle = function (style) {
                 setNavStyle(style)
             }
-            
+            template.lastElementChild.setTitle = function (title) {
+                template.querySelector('.fragment-title').textContent = title;
+            }
             
             template.lastElementChild.Fragment = this;
             
@@ -132,7 +134,14 @@ const Fragment = (() => {
             delete activities[this.id];
             this.frag.remove();
             this.#stack.forEach(s => s.remove())
+            this.#stack = []
             this.hideDim();
+        }
+    
+        clear() {
+            this.#stack.forEach(s => s.remove());
+            this.#stack = []
+            console.log('after clear here is stack', this.#stack)
         }
         
         get stacks() {
@@ -182,10 +191,8 @@ const Fragment = (() => {
         plant(codeName, callback) {
             if (plantedFunctions[codeName] === undefined) {
                 plantedFunctions[codeName] = callback;
-                console.log(codeName + ' is planted successfully');
             } else throw codeName + " is already planted";
         },
-        
         getActivities: () => activities
     }
 })();
