@@ -31,7 +31,7 @@ body {
 }
 
 .show-title {
-    font-size: 14px;
+    font-size: 13px;
     margin: 10px 0;
     overflow: hidden;
     text-overflow: ellipsis;

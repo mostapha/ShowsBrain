@@ -2,6 +2,10 @@ const Fragment = (() => {
     const fragmentContainer = document.getElementById('fragments'),
         dim = document.querySelector('#fragment-dim');
     
+    const colorOfStyle = {
+        indigo600: "#520dc2",
+        red500: "#dc3545"
+    }
     
     let popstateIndex = 0;
     window.onpopstate = (event) => {
@@ -58,6 +62,7 @@ const Fragment = (() => {
             
             function setNavStyle(style) {
                 template.querySelector('nav').classList.add(style);
+                document.head.querySelector('[name="theme-color"]').content = colorOfStyle[style];
             }
             
             if (style) {
