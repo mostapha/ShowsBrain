@@ -137,7 +137,7 @@
     </div>
 
 
-    <div class="card mb-4 border-0" id='showViewer'>
+    <div class="card bg-transparent mb-4 border-0" id='showViewer'>
         <div class="g-0 justify-content-center row text-center">
             <div class="col-6">
                 <div class="global-poster poster"><img alt="" data-poster="" draggable="false" loading="lazy"
@@ -215,6 +215,7 @@
             </select>
         </div>
 
+
         <div class="mt-4 text-end text-sm-start">
             <button class="btn btn-primary" id='edit-show-confirm' type="submit"><i class="fa-check fa-solid me-2"></i>Update
                 show
@@ -222,6 +223,51 @@
         </div>
 
     </form>
+
+    <form id="season-edit-form">
+
+        <div class="mb-3">
+            <label class="form-label" for="edit-season-aired">Air date</label>
+            <input class="form-control"
+                   id="edit-season-aired"
+                   onblur="this.checkValidity() ? this.classList.remove('is-invalid') : this.classList.add('is-invalid')"
+                   pattern="^\d{4}(?:\s\d{2}(?:\s\d{2})?)?$" type="text">
+            <div class="form-text">The year of which the season is released, leave it empty if you don't know</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="edit-season-summary">Summary</label>
+            <textarea class="form-control" id="edit-season-summary" rows="3"></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="edit-season-episodes-count">Number of episodes</label>
+            <input class="form-control" id="edit-season-episodes-count" min="1" type="number">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="edit-season-last-watched-episode">Last watched Episode</label>
+            <input class="form-control" id="edit-season-last-watched-episode" type="number">
+            <div class="form-text">If you didn't watch any episode keep it empty, do not type 0 in the box</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="edit-season-status">season status</label>
+            <select class="form-select" id='edit-season-status'>
+                <option selected></option>
+                <option value="upcoming">Upcoming</option>
+                <option value="ongoing">Ongoing</option>
+                <option value="ended">Ended</option>
+                <option value="pending">Pending</option>
+            </select>
+        </div>
+
+        <div class="mt-4 text-end text-sm-start">
+            <button class="btn btn-primary" id='edit-season-confirm' type="submit"><i class="fa-check fa-solid me-2"></i>Update Season</button>
+        </div>
+
+    </form>
+
 
     <div class="fragment-view hidden-scroll" data-template-name="fragment-view">
         <nav class="fragment-nav bg-light flex-nowrap gap-2 justify-content-start navbar px-2">
@@ -297,6 +343,7 @@
                 <button class="btn btn-outline-secondary" id="get-image" type="button">Get</button>
                 <button class="btn btn-outline-primary" disabled="" id="save-image" type="button">Save</button>
             </div>
+            <button disabled id='remove-poster' type="button" class="btn btn-danger btn-sm mt-4">remove poster</button>
         </div>
     </div>
 
@@ -312,6 +359,7 @@
                 <option>On-Hold</option>
                 <option>Dropped</option>
                 <option>Plan to Watch</option>
+                <option>Pending</option>
             </select>
         </div>
 
@@ -339,6 +387,50 @@
             </label>
             <textarea class="form-control" id="edit-show-notes" rows="3"></textarea>
             <div class="form-text">some notes about the show</div>
+        </div>
+        <button class="btn btn-primary" type="submit">Submit</button>
+    </form>
+
+    <form id="classify-season">
+        <div class="mb-3">
+            <label class="form-label" for="edit-season-userStatus">
+                <i class="fa-tv-retro fa-regular fa-fw me-2"></i>User status
+            </label>
+            <select class="form-select" id="edit-season-userStatus">
+                <option selected=""></option>
+                <option>Watching</option>
+                <option>Completed</option>
+                <option>On-Hold</option>
+                <option>Dropped</option>
+                <option>Plan to Watch</option>
+                <option>Pending</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="edit-season-rating">
+                <i class="fa-star-half-stroke fa-regular fa-fw me-2"></i>User Rating
+            </label>
+            <select class="form-select" id="edit-season-rating">
+                <option selected=""></option>
+                <option value="10">10 - Masterpiece</option>
+                <option value="9">9 - Great</option>
+                <option value="8">8 - Very Good</option>
+                <option value="7">7 - Good</option>
+                <option value="6">6 - Fine</option>
+                <option value="5">5 - Average</option>
+                <option value="4">4 - Bad</option>
+                <option value="3">3 - Very Bad</option>
+                <option value="2">2 - Horrible</option>
+                <option value="1">1 - Appalling</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="edit-season-notes">
+                <i class="fa-note-sticky fa-regular fa-fw me-2"></i>Note
+            </label>
+            <textarea class="form-control" id="edit-season-notes" rows="3"></textarea>
+            <div class="form-text">some notes about the season</div>
         </div>
         <button class="btn btn-primary" type="submit">Submit</button>
     </form>

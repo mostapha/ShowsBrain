@@ -31,13 +31,14 @@ body {
 }
 
 .show-title {
-    font-size: 16px;
+    font-size: 14px;
     margin: 10px 0;
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
+    padding-right: 8px;
 }
 
 
@@ -83,10 +84,10 @@ body {
     margin: auto;
 }
 
-.stack .poster {
-    width: 180px;
-    height: 258px;
+.show-list-inner .show-card, .show-list-inner .show-card > .poster {
+    width: 150px;
 }
+
 
 .stack .poster:empty {
     background: #dfdfdf;
@@ -197,13 +198,17 @@ nav.red500 {
 
 
 /* this one should only select the titles that are in the  show interface */
-#show-interface h2.title {
+#show-interface h2.title, #season-interface h2.title {
     color: #b02a37;
     font-weight: 700;
     font-size: 14px !important;
     margin-bottom: 0.75em;
     margin-top: 1.5em;
 }
+#season-interface h2.title {
+    color: #520dc2;
+}
+
 #show-interface p.summary {
     font-size: 15px;
 }
@@ -300,4 +305,48 @@ nav.red500 {
 .user-prefs-main .icon.active-star {
     font-weight: 600;
     color: #ffbc00;
+}
+
+.season-position {
+    color: #6c757d;
+    display: block;
+    margin-top: 0.25rem;
+}
+
+#show-interface {
+    position: relative;
+}
+#show-interface .cover {
+    width: 100%;
+    padding-top: 50%;
+    overflow: hidden;
+    display: block;
+    height: auto;
+    outline: none;
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1;
+    background: linear-gradient(180deg, #f8d7da, #0000);
+}
+#show-interface .poster {
+    position: relative;
+    z-index: 9;
+}
+
+.ribbon {
+    position: absolute;
+    z-index: 10;
+    text-align: center;
+    inset: 0 auto auto 0;
+    background: #b02a37;
+    transform-origin: 100% 0;
+    transform: translate(-29.3%) rotate(-45deg);
+    box-shadow: 0 0 0 24px #b02a37;
+    clip-path: inset(-30% -100%);
+    color: #fff;
+    font-size: 13px;
+    font-weight: bold;
+    padding: 0 10px;
+    text-shadow: 0 1px black;
 }
