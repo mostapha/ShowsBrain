@@ -2,6 +2,8 @@ Node.prototype.appendHTML = function (html) {
     this.insertAdjacentHTML('beforeend', html);
 }
 
+window.structuredClone = window.structuredClone || {};
+
 function appendOrdinalSuffix(num) {
     console.log('num', num);
     if (num >= 10 && num <= 20) {
@@ -226,7 +228,7 @@ const Helper = (() => {
             const MAX_WIDTH = 270;
             const MAX_HEIGHT = 387;
             const MIME_TYPE = "image/jpeg";
-            const QUALITY = 1;
+            const QUALITY = 0.9;
     
             const img = new Image();
             img.src = blobURL;

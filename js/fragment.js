@@ -70,7 +70,6 @@ const Fragment = (() => {
             }
             
             function initNavActions(navActions) {
-                
                 let navActionsElem = template.querySelector('.nav-actions')
                 navActions.forEach(navAction => {
                     let btn = create('button', {
@@ -115,6 +114,13 @@ const Fragment = (() => {
                 template.querySelector('.fragment-title').textContent = title;
             }
             
+            template.lastElementChild.reset = function (){
+                $(template.lastElementChild).off().empty();
+                template.querySelector('.nav-actions').innerHTML = "";
+            }
+    
+            
+            
             template.lastElementChild.Fragment = this;
             
             if (typeof callback === 'object') {
@@ -124,9 +130,13 @@ const Fragment = (() => {
             } else callback.call(template.lastElementChild);
         }
         
+        // go the previous page
         back() {
             if (this.#stack.length > 0) {
-                this.#stack.pop().remove();
+                
+                let poppedItem = this.#stack.pop();
+                poppedItem.lastElementChild.onDestroy?.();
+                poppedItem.remove();
                 if (this.#stack.length === 0) {
                     delete activities[this.id];
                     this.frag.remove();
@@ -134,17 +144,34 @@ const Fragment = (() => {
                 }
             }
         }
+    
+        // got the first page
+        home() {
+            if (this.#stack.length > 1) {
+                // keeps the first item, returns the remaining items then removes them
+                this.#stack.splice(1).forEach(n => {
+                    n.lastElementChild.onDestroy?.();
+                    n.remove();
+                });
+            }
+        }
         
         destroy() {
             delete activities[this.id];
             this.frag.remove();
-            this.#stack.forEach(s => s.remove())
+            this.#stack.forEach(s => {
+                s.lastElementChild.onDestroy?.();
+                s.remove()
+            })
             this.#stack = []
             this.hideDim();
         }
     
         clear() {
-            this.#stack.forEach(s => s.remove());
+            this.#stack.forEach(s => {
+                s.lastElementChild.onDestroy?.();
+                s.remove()
+            });
             this.#stack = []
             console.log('after clear here is stack', this.#stack)
         }
