@@ -107,8 +107,8 @@
             <label class="form-label" for="new-show-air-date">Air date</label>
             <input class="form-control"
                    id="new-show-air-date"
-                   onblur="this.checkValidity() ? this.classList.remove('is-invalid') : this.classList.add('is-invalid')"
-                   pattern="^\d{4}(?:\s\d{2}(?:\s\d{2})?)?$" type="text">
+                   onblur="this.value === '' || validDateFormat.test(this.value) ? (this.setCustomValidity(''), this.classList.remove('is-invalid')) : (this.setCustomValidity('invalid date format'), this.classList.add('is-invalid'))"
+                   type="text">
             <div class="form-text">The year of which the show is released, leave empty if you do not know</div>
         </div>
         <div class="mb-3">
@@ -116,6 +116,7 @@
             <select aria-label="Default select example" class="form-select" id="new-show-type" required>
                 <option selected></option>
                 <option>TV series</option>
+                <option>TV Mini Series</option>
                 <option>Movie</option>
                 <option>Anime</option>
             </select>
@@ -148,7 +149,7 @@
                 <div class="card-body">
                     <small class="text-muted show-type">Anime</small>
                     <h5 class="show-name">One Piece <span class="aired">(1999)</span></h5>
-                    <p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>
+                    <div class="card-more-info"></div>
                 </div>
             </div>
         </div>
@@ -181,6 +182,7 @@
             <select aria-label="Default select example" class="form-select" id="edit-show-type" required>
                 <option selected></option>
                 <option>TV series</option>
+                <option>TV Mini Series</option>
                 <option>Movie</option>
                 <option>Anime</option>
             </select>
@@ -189,8 +191,8 @@
             <label class="form-label" for="edit-show-aired">Air date</label>
             <input class="form-control"
                    id="edit-show-aired"
-                   onblur="this.checkValidity() ? this.classList.remove('is-invalid') : this.classList.add('is-invalid')"
-                   pattern="^\d{4}(?:\s\d{2}(?:\s\d{2})?)?$" type="text">
+                   onblur="this.value === '' || validDateFormat.test(this.value) ? (this.setCustomValidity(''), this.classList.remove('is-invalid')) : (this.setCustomValidity('invalid date format'), this.classList.add('is-invalid'))"
+                   type="text">
             <div class="form-text">The year of which the show is released, leave empty if you do not know</div>
         </div>
 
@@ -250,11 +252,19 @@
     <form id="season-edit-form">
 
         <div class="mb-3">
+            <label class="form-label" for="edit-season-name">Unique name</label>
+            <input class="form-control"
+                   id="edit-season-name"
+                   onblur="this.value=this.value.toTitleCase()" type="text">
+            <div class="form-text">Only if it has a unique name, leave it empty if it does not</div>
+        </div>
+
+        <div class="mb-3">
             <label class="form-label" for="edit-season-aired">Air date</label>
             <input class="form-control"
                    id="edit-season-aired"
-                   onblur="this.checkValidity() ? this.classList.remove('is-invalid') : this.classList.add('is-invalid')"
-                   pattern="^\d{4}(?:\s\d{2}(?:\s\d{2})?)?$" type="text">
+                   onblur="this.value === '' || validDateFormat.test(this.value) ? (this.setCustomValidity(''), this.classList.remove('is-invalid')) : (this.setCustomValidity('invalid date format'), this.classList.add('is-invalid'))"
+                    type="text">
             <div class="form-text">The year of which the season is released, leave it empty if you don't know</div>
         </div>
 
@@ -286,7 +296,7 @@
         </div>
 
         <div class="mt-4 text-end text-sm-start">
-            <button class="btn btn-primary" id='edit-season-confirm' type="submit"><i class="fa-check fa-solid me-2"></i>Update Season</button>
+            <button class="btn btn-primary" type="submit"><i class="fa-check fa-solid me-2"></i>Update Season</button>
         </div>
 
     </form>
@@ -482,9 +492,7 @@
 </template>
 
 
-<div id="fragments">
-    <div id="fragment-dim"></div>
-</div>
+<div id="fragments"><div id="fragment-dim"></div></div>
 
 <script src="libraries/jQuery/jquery.js"></script>
 <script src="libraries/Dexie.js-3.2.2/dist/dexie.js"></script>

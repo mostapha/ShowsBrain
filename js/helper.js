@@ -28,6 +28,7 @@ const romanLookup = {
     100: 'C', 90: 'XC', 50: 'L', 40: 'XL',
     10: 'X', 9: 'IX', 5: 'V', 4: 'IV', 1: 'I'
 }
+
 function romanize(num) {
     let roman = '';
     for (let i of Object.keys(romanLookup).reverse()) {
@@ -39,6 +40,12 @@ function romanize(num) {
     return roman;
 }
 
+const parseDate = (date) => {
+    const match = date.match(/^(?:(?:(?<Day>(?:3[0-1]|[1-2]\d|0?[1-9]))(?:[\s/-]))?(?<Month>(?:(?:1[0-2]|0?[1-9])|jan(?:uary|\.)?|feb(?:ruary|\.)?|mar(?:ch|\.)?|apr(?:il|\.)?|may.?|june?\.?|july?\.?|aug(?:ust)?\.?|sep(?:t|tember)?\.?|Oct(?:ober)?\.?|nov(?:ember)?\.?|dec(?:ember)?\.?))(?:[\s/-]))?(?<Year>\d{4})$/i);
+    
+    if (!match) throw "unsupported date format";
+    return new Date((match.groups.Month ?? "1") + " " + (match.groups.Day ?? "1") + " " + match.groups.Year);
+}
 
 /* To Title Case © 2018 David Gouch | https://github.com/gouch/to-title-case */
 String.prototype.toTitleCase = function () {
@@ -178,7 +185,7 @@ document.addEventListener('smartFetchResponse', function (data) {
 // check for Hero addon
 window.addEventListener('DOMContentLoaded', () => {
     setTimeout(function () {
-        let waiter = setTimeout(function (){
+        let waiter = setTimeout(function () {
             alert('hero addon is not found');
         }, 200);
         let checkTestHero = function () {
@@ -190,7 +197,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }, 200)
 });
 
-const templates = Object.assign({}, ...Array.from(document.querySelector('#template').content.children).map(n => ({[n.id||n.dataset.templateName]: n})));
+const templates = Object.assign({}, ...Array.from(document.querySelector('#template').content.children).map(n => ({[n.id || n.dataset.templateName]: n})));
 
 
 const Helper = (() => {
@@ -205,11 +212,11 @@ const Helper = (() => {
      * @param blobURL
      * @return {Promise<Blob>}
      */
-    function resizePoster(blobURL){
+    function resizePoster(blobURL) {
         function calculateSize(img, maxWidth, maxHeight) {
             let width = img.width;
             let height = img.height;
-        
+            
             // calculate the width and height, constraining the proportions
             if (width > height) {
                 if (width > maxWidth) {
@@ -224,12 +231,13 @@ const Helper = (() => {
             }
             return [width, height];
         }
+        
         return new Promise((resolve, reject) => {
             const MAX_WIDTH = 270;
             const MAX_HEIGHT = 387;
             const MIME_TYPE = "image/jpeg";
             const QUALITY = 0.9;
-    
+            
             const img = new Image();
             img.src = blobURL;
             img.onerror = function () {
@@ -244,13 +252,13 @@ const Helper = (() => {
                 canvas.width = newWidth;
                 canvas.height = newHeight;
                 const ctx = canvas.getContext("2d");
-        
+                
                 // show white color if there is transparent
                 ctx.fillStyle = "#FFF";
                 ctx.fillRect(0, 0, newWidth, newHeight);
-        
+                
                 ctx.drawImage(img, 0, 0, newWidth, newHeight);
-        
+                
                 canvas.toBlob(
                     blob => resolve(blob),
                     MIME_TYPE,
@@ -280,7 +288,7 @@ const Helper = (() => {
                     if (r.type === 'Uint8Array') {
                         let imageBlob = new Blob([new Uint8Array(r.value).buffer], {type: r.fileType});
                         
-                        if(requestBlob){
+                        if (requestBlob) {
                             resolve(imageBlob);
                         } else {
                             resolve(URL.createObjectURL(imageBlob));
@@ -324,7 +332,7 @@ const Helper = (() => {
                 mt = ("0" + (d.getMonth() + 1)).slice(-2),
                 yr = d.getFullYear()
             
-            return (yr + ' ' + mt + ' ' + dt).replace(/(?:\s01)+$/, '');
+            return (dt + '-' + mt + '-' + yr)
         },
         installScript(...s) {
             return new Promise((resolve, reject) => {
@@ -359,20 +367,20 @@ const Helper = (() => {
             })
         },
         
-        async getImage(url, isBlob){
+        async getImage(url, isBlob) {
             return await new Promise((resolve, reject) => {
                 getImageFromAnywhere(url, isBlob).then(n => {
                     resolve(n);
                 }).catch(err => {
-                    if(err.type === 2){
+                    if (err.type === 2) {
                         console.log('image not found in web')
                     }
                     reject(err);
                 });
             });
         },
-    
-    
+        
+        
         resizePoster: resizePoster
     }
 })()

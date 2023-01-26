@@ -7,7 +7,6 @@ const Fragment = (() => {
         red500: "#dc3545"
     }
     
-    let popstateIndex = 0;
     window.onpopstate = (event) => {
         console.log('event', event, event.state);
         Fragment.getActiveFragment()?.back()
@@ -32,18 +31,20 @@ const Fragment = (() => {
         }
         
         hideDim() {
-            if (Object.keys(activities).length === 0) {
-                dim.style.visibility = 'hidden'
-            }
+            dim.style.visibility = 'hidden'
         }
         
         push(callback, title, navActions, style) {
+    
+            // check if the last view is available and notify with onPause
+            this.#stack.at(-1)?.lastElementChild.onPause?.();
             
-            history.pushState(++popstateIndex, '', null);
             
+            history.pushState(null, '', null);
             
             let self = this;
             let template = templates['fragment-view'].cloneNode(1);
+            
             if (title) {
                 template.dataset.name = title;
             }
@@ -51,7 +52,7 @@ const Fragment = (() => {
             this.frag.append(template);
             this.#stack.push(template);
             
-            if(title){
+            if (title) {
                 template.querySelector('.fragment-title').textContent = title;
             }
             
@@ -114,11 +115,10 @@ const Fragment = (() => {
                 template.querySelector('.fragment-title').textContent = title;
             }
             
-            template.lastElementChild.reset = function (){
+            template.lastElementChild.reset = function () {
                 $(template.lastElementChild).off().empty();
                 template.querySelector('.nav-actions').innerHTML = "";
             }
-    
             
             
             template.lastElementChild.Fragment = this;
@@ -128,23 +128,63 @@ const Fragment = (() => {
                     plantedFunctions[callback.name].call(template.lastElementChild, callback.params)
                 } else throw callback.name + " is not planted";
             } else callback.call(template.lastElementChild);
+            
+            // // check if the last view is available and notify with onPause
+            // this.#stack.at(-1)?.lastElementChild.onPause?.();
+            //
         }
         
         // go the previous page
         back() {
             if (this.#stack.length > 0) {
                 
+                // remove the last element from stack, returns it then clear it
                 let poppedItem = this.#stack.pop();
                 poppedItem.lastElementChild.onDestroy?.();
                 poppedItem.remove();
+                
                 if (this.#stack.length === 0) {
-                    delete activities[this.id];
+                    activities.delete(this.id);
                     this.frag.remove();
-                    this.hideDim();
+    
+                    // hide the dim only if there are no other fragments
+                    if (activities.size === 0) {
+                        this.hideDim();
+                    } else {
+                        // find the active fragment and notify it
+                        Fragment.getActiveFragment().stacks.at(-1).lastElementChild.onResume?.();
+                    }
+                    
+                } else {
+                    
+                    // get the last view and
+                    this.#stack.at(-1).lastElementChild.onResume?.();
                 }
             }
         }
     
+        destroy() {
+            activities.delete(this.id);
+        
+            this.frag.remove();
+            this.#stack.forEach(s => {
+                s.lastElementChild.onDestroy?.();
+                s.remove()
+            })
+            this.#stack = []
+    
+            // hide the dim only if there are no other fragments
+            if (activities.size === 0) {
+                this.hideDim();
+            } else {
+                
+                // find the active fragment and notify it
+                Fragment.getActiveFragment().stacks.at(-1).lastElementChild.onResume?.();
+                
+            }
+        
+        }
+        
         // got the first page
         home() {
             if (this.#stack.length > 1) {
@@ -153,20 +193,11 @@ const Fragment = (() => {
                     n.lastElementChild.onDestroy?.();
                     n.remove();
                 });
+                this.#stack[0].lastElementChild.onResume?.();
             }
         }
         
-        destroy() {
-            delete activities[this.id];
-            this.frag.remove();
-            this.#stack.forEach(s => {
-                s.lastElementChild.onDestroy?.();
-                s.remove()
-            })
-            this.#stack = []
-            this.hideDim();
-        }
-    
+        
         clear() {
             this.#stack.forEach(s => {
                 s.lastElementChild.onDestroy?.();
@@ -186,17 +217,15 @@ const Fragment = (() => {
     }
     
     // caches list of fragments
-    let activities = {};
+    let activities = new Map();
     
     let plantedFunctions = {};
     
     function selectFragment(id) {
-        if (activities[id]) {
-            // return activity
-            return activities[id]
+        if(activities.has(id)){
+            return activities.get(id);
         } else {
-            // create activity
-            return activities[id] = new FragmentGenerator(id);
+            return activities.set(id, new FragmentGenerator(id)).get(id)
         }
     }
     
@@ -207,7 +236,7 @@ const Fragment = (() => {
     }
     
     dim.onclick = function () {
-        Fragment.getActiveFragment().back();
+        Fragment.getActiveFragment()?.back();
     }
     
     return {
@@ -216,7 +245,7 @@ const Fragment = (() => {
         
         },
         getFragments() {
-            return activities;
+            return activities
         },
         getActiveFragment: getActiveFragment,
         
@@ -225,7 +254,14 @@ const Fragment = (() => {
                 plantedFunctions[codeName] = callback;
             } else throw codeName + " is already planted";
         },
-        getActivities: () => activities
+        getSavedData(){
+            return {
+                activities: activities,
+                plantedFunctions: plantedFunctions,
+                fragmentContainer: fragmentContainer
+            }
+        }
     }
 })();
+
 

@@ -1,6 +1,6 @@
 
 
-const cacheName = "brain-cache-v3";
+const cacheName = "brain-cache-v4";
 
 let appShellFiles = [
     // html
@@ -54,6 +54,7 @@ self.addEventListener("install", (e) => {
     );
 });
 
+const reg = /^(?:(?:(?<Day>(?:3[0-1]|[1-2][0-9]|0?[1-9]))(?<seperator>[\s/-]))?(?<Month>(?:(?:1[0-2]|0?[1-9])|jan(?:uary|\.)?|feb(?:ruary|\.)?|mar(?:ch|\.)?|apr(?:il|\.)?|may.?|june?\.?|july?\.?|Aug(?:ust)?\.?|Sep(?:t|tember)?\.?|Oct(?:ober)?\.?|nov(?:ember)?\.?|dec(?:ember)?\.?))\k<seperator>)?(?<Year>\d{4})$/
 
 // self.addEventListener("fetch", (e) => {
 //     e.respondWith(

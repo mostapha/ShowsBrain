@@ -2,19 +2,13 @@ $(document).on('submit', 'form', function (e) {
     e.preventDefault();
     e.stopPropagation();
 }).on('click', '.show-card', function () {
+    
     console.log('card clicked', this.dataset.showId);
-    
-    let showId = this.dataset.showId;
-    
+    let showId = Number(this.dataset.showId);
     console.log('showId', showId);
-    db.shows.get({id: Number(showId)}).then(show => {
-        console.log('show:::', show)
-        if (show) {
-            Fragment.select('show-info').push({
-                name: "show-interface",
-                params: {show: show}
-            });
-        }
+    Fragment.select('show-info').push({
+        name: "show-interface",
+        params: {showId: showId}
     });
     
 }).on('click', '.season-card', function () {
@@ -44,49 +38,50 @@ $(document).on('submit', 'form', function (e) {
 })
 
 // load dexie
-let db;
-db = new Dexie("showsMemory");
+const db = new Dexie("showsMemory");
 db.version(2).stores({
     shows: "++id, type, status, userStatus, *prequel, *sequel, *related",
     images: "&id",
     seasons: "++id, showId"
 });
 
-console.log('works');
 
 const reverseRelation = {
     sequel: 'prequel',
     prequel: 'sequel',
     related: 'related'
 }
-
+const validDateFormat = /^(?:(?:(?<Day>(?:3[0-1]|[1-2]\d|0?[1-9]))(?:[\s/-]))?(?<Month>(?:(?:1[0-2]|0?[1-9])|jan(?:uary|\.)?|feb(?:ruary|\.)?|mar(?:ch|\.)?|apr(?:il|\.)?|may.?|june?\.?|july?\.?|aug(?:ust)?\.?|sep(?:t|tember)?\.?|Oct(?:ober)?\.?|nov(?:ember)?\.?|dec(?:ember)?\.?))(?:[\s/-]))?(?<Year>\d{4})$/i
 
 document.querySelector('.add-show').addEventListener('click', function () {
     Fragment.select('shows-adder').push(function () {
         let self = this,
             $t = $(self);
         
-        let form = templates['add-show-screen'].cloneNode(1),
-            $form = $(form);
+        let addShowForm = templates['add-show-screen'].cloneNode(1),
+            $addShowForm = $(addShowForm);
         
-        $t.off().html(form);
+        $t.off().html(addShowForm);
         
         let $showName = $t.find('#new-show-name'),
             $showAired = $t.find('#new-show-air-date'),
             $showType = $t.find('#new-show-type'),
             $showSeasonsCount = $t.find('#new-show-seasons-count');
         
-        $form.on('submit', function () {
+        let addedShowId;
+        $addShowForm.on('submit', function () {
             db.transaction('rw', db.shows, db.seasons, () => {
                 let dataAdded = {
                     name: $showName.val().trim(),
-                    ...($showAired.val().trim() !== "" && {aired: new Date($showAired.val())}),
+                    ...($showAired.val().trim() !== "" && {aired: parseDate($showAired.val())}),
                     type: $showType.val(),
                     seasonsCount: parseInt($showSeasonsCount.val()),
                     added: new Date()
                 };
                 
                 return db.shows.add(dataAdded).then(showId => {
+                    
+                    addedShowId = showId;
                     
                     console.log('show added, now let\'s add seasons');
                     
@@ -98,25 +93,25 @@ document.querySelector('.add-show').addEventListener('click', function () {
                     
                     console.log('seasonsToAdd', seasonsToAdd);
                     
-                    db.seasons.bulkAdd(seasonsToAdd).then(n => {
-                        console.log('n', n);
-                        
-                        self.Fragment.back();
-                        db.shows.get({id: showId}).then(show => {
-                            $('.show-list-inner').append(generateShowCard(show))
-                            
-                            
-                            Fragment.select('show-info').push({
-                                name: "show-interface",
-                                params: {show: show}
-                            });
-                            
-                        });
-                    })
+                    return db.seasons.bulkAdd(seasonsToAdd);
                 })
                 
             }).then(n => {
                 console.log('all succeed', n);
+                console.log('addedShowId', addedShowId);
+                
+                self.Fragment.destroy();
+                db.shows.get({id: addedShowId}).then(show => {
+                    $('.show-list-inner').append(generateShowCard(show))
+        
+                    console.log('open show-info-interface');
+                    Fragment.select('show-info').push({
+                        name: "show-interface",
+                        params: {
+                            showId: show.id
+                        }
+                    });
+                });
             }).catch(err => {
                 console.log('found errors');
                 console.error(err);
@@ -126,15 +121,11 @@ document.querySelector('.add-show').addEventListener('click', function () {
     }, 'Add new show');
 });
 
-
 Fragment.plant('show-interface', function (params) {
-    const showsObservable = Dexie.liveQuery(
-        () => db.shows.get({id: params.show.id})
-    );
+
+    const showsObservable = Dexie.liveQuery(() => db.shows.get({id: params.showId}));
+    
     const subscription = showsObservable.subscribe({
-        start: st => {
-            console.log('subscription start', st);
-        },
         next: show => {
             console.log('subscription next');
             this.reset();
@@ -143,23 +134,23 @@ Fragment.plant('show-interface', function (params) {
             // const show = params.show;
             let self = this,
                 $t = $(self);
-    
+            
             console.log('self', self);
-    
+            
             // handle gear function
             self.setTitle(show.name);
             self.registerNavAction([{
                 name: 'User preferences',
                 icon: 'fa-regular fa-user-gear',
                 action: function () {
-            
+                    
                     // show edit fragment
-            
+                    
                     Fragment.select('show-info').push({
                         name: "show-classifier-plant",
                         params: {show: show}
                     });
-            
+                    
                 }
             }, {
                 name: 'Preferences',
@@ -169,7 +160,7 @@ Fragment.plant('show-interface', function (params) {
                     MoreOptionsFragment.push(function () {
                         let $t = $(this);
                         $t.html(templates['show-more-options-list'].cloneNode(1));
-                
+                        
                         $t.on('click', 'button', function () {
                             // to prevent creating a lot of ids that we will only use once, we added data-action instead to button
                             // this way we can just check which action is performed
@@ -178,9 +169,9 @@ Fragment.plant('show-interface', function (params) {
                                 case 'manage-related-shows': {
                                     console.log('manage-related-shows');
                                     MoreOptionsFragment.push(async function () {
-                                
+                                        
                                         let $t = $(this);
-                                
+                                        
                                         // related shows
                                         const relatedShows = [show.prequel, show.sequel, show.related].flat().filter(e => e !== undefined);
                                         console.log('relatedShows', relatedShows);
@@ -189,15 +180,15 @@ Fragment.plant('show-interface', function (params) {
                                                 let self = this,
                                                     thatShowId = Number(self.dataset.showId),
                                                     relation = self.dataset.relation.toLowerCase();
-                                        
+                                                
                                                 let relatedShowName = self.previousElementSibling.textContent;
                                                 if (confirm('do you really want to unmark ' + relatedShowName + ' as a ' + relation + '?')) {
-                                            
+                                                    
                                                     db.transaction('rw', db.shows, () => {
                                                         let editOrigin = db.shows.where({id: show.id}).modify(thisShow => {
                                                             console.log('thisShow', thisShow);
                                                             console.log('origin relation', thisShow[relation]);
-                                                    
+                                                            
                                                             if (thisShow[relation] && thisShow[relation].includes(thatShowId)) {
                                                                 thisShow[relation].splice(thisShow[relation].indexOf(thatShowId), 1);
                                                                 if (thisShow[relation].length === 0) {
@@ -206,12 +197,12 @@ Fragment.plant('show-interface', function (params) {
                                                             } else {
                                                                 throw 'not found'
                                                             }
-                                                    
+                                                            
                                                             console.log('origin result', thisShow);
                                                         });
                                                         let editRelated = db.shows.where({id: thatShowId}).modify(relatedShow => {
                                                             console.log('related relation', relatedShow[reverseRelation[relation]]);
-                                                    
+                                                            
                                                             if (relatedShow[reverseRelation[relation]] && relatedShow[reverseRelation[relation]].includes(show.id)) {
                                                                 relatedShow[reverseRelation[relation]].splice(relatedShow[reverseRelation[relation]].indexOf(show.id), 1);
                                                                 if (relatedShow[reverseRelation[relation]].length === 0) {
@@ -220,79 +211,79 @@ Fragment.plant('show-interface', function (params) {
                                                             } else {
                                                                 throw 'not found'
                                                             }
-                                                    
+                                                            
                                                             console.log('related result', relatedShow);
                                                         });
-                                                
+                                                        
                                                         return Promise.all([editOrigin, editRelated]).then(r => {
                                                             if (r[0] !== 1 || r[1] !== 1) {
                                                                 throw "This looks suspicious, one of 'changes' is not 1";
                                                             }
                                                         });
                                                     }).then(() => {
-                                                
+                                                        
                                                         let item = self.closest('li')
                                                         if (item.parentElement.childElementCount === 1) {
                                                             let parent = item.parentElement;
-                                                    
+                                                            
                                                             if (parent.parentElement.childElementCount === 2) {
                                                                 $t.html('<div class="fs-5 fs-6 p-5 text-center text-muted">No related shows found</div>');
                                                             } else {
                                                                 [parent.previousElementSibling, parent].forEach(n => n.remove());
                                                             }
-                                                    
+                                                            
                                                         } else {
                                                             item.remove();
                                                         }
-                                                
-                                                
+                                                        
+                                                        
                                                     }).catch(err => {
                                                         console.warn("no commit");
                                                         console.error(err);
                                                         alert(err.message || err);
                                                     })
-                                            
+                                                    
                                                 }
-                                        
+                                                
                                                 console.log(thatShowId, relation);
-                                        
+                                                
                                             });
-                                    
+                                            
                                             console.log('relatedShows', relatedShows);
-                                    
+                                            
                                             db.shows.where('id').anyOf(relatedShows).toArray().then(n => {
                                                 console.log('n', n);
-                                        
+                                                
                                                 let prequels = n.filter(e => e.sequel?.includes(show.id)),
                                                     sequels = n.filter(e => e.prequel?.includes(show.id)),
                                                     related = n.filter(e => e.related?.includes(show.id));
-                                        
+                                                
                                                 console.log('prequels', prequels);
                                                 console.log('sequels', sequels);
                                                 console.log('related', related);
-                                        
+                                                
                                                 const content = [prequels, sequels, related],
                                                     contentType = ["Prequel", "Sequel", "Related"];
-                                        
+                                                
                                                 console.log('content', content);
-                                        
+                                                
                                                 content.forEach((relatedShows, contentIndex) => {
                                                     if (relatedShows.length > 0) {
                                                         let listGroup = create('ul', 'list-group mb-4'),
                                                             heading = create('h2', 'fs-6 fw-bold mb-3');
-                                                
+                                                        
                                                         heading.textContent = contentType[contentIndex];
                                                         relatedShows.forEach((rShow) => {
                                                             console.log('rShow', rShow);
-                                                    
+                                                            
                                                             let item = templates['show-related'].cloneNode(1);
                                                             item.querySelector('.show-name').textContent = rShow.name;
-                                                    
+                                                            
                                                             let separateBtn = item.querySelector('.separate-shows');
-                                                    
+                                                            
                                                             separateBtn.dataset.showId = rShow.id;
                                                             separateBtn.dataset.relation = contentType[contentIndex].toLowerCase();
-                                                    
+                                                            
                                                             console.log(item);
                                                             listGroup.append(item);
                                                             // <li class="align-items-center d-flex justify-content-between list-group-item pe-2">    <div class="fw-semibold">Contextual classes</div><button class="btn"><i class="fa-regular fa-trash"></i></button></li>
@@ -300,13 +291,13 @@ Fragment.plant('show-interface', function (params) {
                                                         $t.append(heading, listGroup);
                                                     }
                                                 })
-                                        
-                                        
+                                                
+                                                
                                             })
                                         } else {
                                             $t.html('<div class="fs-5 fs-6 p-5 text-center text-muted">No related shows found</div>');
                                         }
-                                
+                                        
                                     }, "related shows to " + show.name, [{
                                         name: 'Add related show',
                                         icon: 'fa-regular fa-plus',
@@ -315,26 +306,26 @@ Fragment.plant('show-interface', function (params) {
                                                 let $t = $(this);
                                                 let setRelatedShowsElem = templates['set-related-shows'].cloneNode(1)
                                                 $t.html(setRelatedShowsElem);
-                                        
+                                                
                                                 let $searchQuery = $t.find('#search-shows'),
                                                     $resetBtn = $t.find('.reset-selected-show'),
                                                     $submitBtn = $t.find('button[type="submit"]');
-                                        
+                                                
                                                 let showsResults = $t.find('.shows-search-results');
                                                 let parent = create('div', 'list-group', 'search-entries');
-                                        
+                                                
                                                 showsResults.append(parent);
-                                        
+                                                
                                                 let allShows = await db.shows.toArray();
                                                 let timeout = -1;
                                                 $searchQuery.on('input', function () {
                                                     clearTimeout(timeout);
                                                     let value = $(this).val().trim();
-                                            
+                                                    
                                                     console.log(value);
                                                     timeout = setTimeout(() => {
                                                         parent.innerHTML = "";
-                                                
+                                                        
                                                         if (value === "") return;
                                                         allShows.filter(e => e.name.toLowerCase().includes(value.toLowerCase()) && e.id !== show.id)
                                                             .forEach(show => {
@@ -345,42 +336,42 @@ Fragment.plant('show-interface', function (params) {
                                                                 if (show.poster) {
                                                                     let imgParent = holder.querySelector('.poster'),
                                                                         img = create('img');
-                                                            
+                                                                    
                                                                     let objUrl = inflateAndGetObject(show.poster)
                                                                     img.onload = () => URL.revokeObjectURL(objUrl);
                                                                     img.src = objUrl;
                                                                     imgParent.append(img);
                                                                 }
-                                                        
-                                                        
+                                                                
+                                                                
                                                                 parent.append(holder);
                                                             });
-                                                
-                                                
+                                                        
+                                                        
                                                     }, 200);
                                                 });
-                                        
+                                                
                                                 showsResults.one('click', '.card', function () {
                                                     let $self = $(this),
                                                         chosenId = $self.data('show-id');
-                                            
+                                                    
                                                     db.shows.get({
                                                         id: chosenId
                                                     }).then(selectedShow => {
-                                                
+                                                        
                                                         $self.siblings().remove();
-                                                
+                                                        
                                                         console.log($searchQuery);
-                                                
+                                                        
                                                         $searchQuery
                                                             .prop('disabled', true)
                                                             .prop('readonly', true)
                                                             .val(selectedShow.name)
                                                             .data('selected-show-id', selectedShow.id);
-                                                
+                                                        
                                                         $submitBtn.prop('disabled', false);
                                                         $resetBtn.prop('disabled', false);
-                                                
+                                                        
                                                     })
                                                 });
                                                 $resetBtn.click(function () {
@@ -389,19 +380,19 @@ Fragment.plant('show-interface', function (params) {
                                                         .prop('readonly', false)
                                                         .val("")
                                                         .removeData('selected-show-id');
-                                            
+                                                    
                                                     $submitBtn.prop('disabled', true);
                                                     $resetBtn.prop('disabled', true);
                                                 });
-                                        
+                                                
                                                 let $relation = $t.find('#show-relation');
                                                 $(setRelatedShowsElem).submit(function () {
                                                     const relatedShowId = $searchQuery.data('selected-show-id'),
                                                         relation = $relation.val();
-                                            
+                                                    
                                                     db.transaction('rw', db.shows, () => {
                                                         return new Dexie.Promise(async (resolve, reject) => {
-                                                    
+                                                            
                                                             // this is used to avoid duplicate code, with this helper we can handle both prequel and sequel with single code
                                                             if (relation === 'sequel' || relation === 'prequel' || relation === 'related') {
                                                                 const updateOrigin = db.shows.where({id: show.id}).modify(thisShow => {
@@ -416,7 +407,7 @@ Fragment.plant('show-interface', function (params) {
                                                                         thisShow[relation] = [relatedShowId]
                                                                     }
                                                                 });
-                                                        
+                                                                
                                                                 const updateRelated = db.shows.where({id: relatedShowId}).modify(relatedShow => {
                                                                     // mark as sequel/prequel and find the related show and mark this as its prequel/sequel
                                                                     if (relatedShow[reverseRelation[relation]]) {
@@ -429,27 +420,26 @@ Fragment.plant('show-interface', function (params) {
                                                                         relatedShow[reverseRelation[relation]] = [show.id]
                                                                     }
                                                                 });
-                                                        
+                                                                
                                                                 console.log('promise all is hit');
                                                                 Promise.all([
                                                                     updateOrigin,
                                                                     updateRelated
                                                                 ]).then(x => {
-                                                                    console.log('promise all then is hit');
-                                                                    console.log('x', x);
                                                                     return resolve();
                                                                 })
                                                             }
-                                                    
+                                                            
                                                         });
                                                     }).then(() => {
                                                         console.log('commit');
+                                                        $t.prop('Fragment').home();
                                                     }).catch(err => {
                                                         console.warn('no commit');
                                                         alert(err.message || err);
                                                     })
-                                            
-                                            
+                                                    
+                                                    
                                                 });
                                             }, 'Add related show to ' + show.name)
                                         }
@@ -463,10 +453,10 @@ Fragment.plant('show-interface', function (params) {
                                         console.log('delete-show');
                                         const relationKeys = ["prequel", "sequel", "related"];
                                         db.transaction('rw', db.shows, db.seasons, () => {
-                                    
+                                            
                                             // get fresh info about the show we going to delete
                                             return db.shows.get({id: show.id}).then(s => {
-                                        
+                                                
                                                 // find the related shows
                                                 let modifyRelatedShows = db.shows.where("prequel").equals(s.id).or('sequel').equals(s.id).or('related').equals(s.id).modify(related_show => {
                                                     console.log('related_show before', structuredClone(related_show));
@@ -480,31 +470,31 @@ Fragment.plant('show-interface', function (params) {
                                                         }
                                                     })
                                                     console.log('related_show after', structuredClone(related_show));
-                                            
+                                                    
                                                 });
-                                        
+                                                
                                                 // after we updated the related shows we going to delete the seasons
                                                 let deleteSeasons = db.seasons.where('showId').equals(s.id).delete()
-                                        
+                                                
                                                 // after we deleted the seasons, finally we will delete the show
                                                 let deleteShow = db.shows.where('id').equals(s.id).delete();
-                                        
+                                                
                                                 return Promise.all([modifyRelatedShows, deleteSeasons, deleteShow]).then(n => {
                                                     let [modifyRelatedShows, deleteSeasons, deleteShow] = n;
-                                            
+                                                    
                                                     console.log('modifyRelatedShows', modifyRelatedShows);
                                                     console.log('deleteSeasons', deleteSeasons);
                                                     console.log('deleteShow', deleteShow);
-                                            
+                                                    
                                                     console.log('promise all result', n);
                                                 });
                                             })
                                         }).then(() => {
                                             console.log('commit, show deleted');
-                                    
+                                            
                                             $t.prop('Fragment').destroy();
                                             document.querySelectorAll('div[data-show-id="' + show.id + '"]').forEach(elem => elem.remove());
-                                    
+                                            
                                         }).catch(err => {
                                             console.warn('no commit');
                                             alert(err.message || err);
@@ -514,7 +504,7 @@ Fragment.plant('show-interface', function (params) {
                                     break;
                                 }
                                 case 'manage-poster': {
-                                    Fragment.select('show-info').push(  {
+                                    Fragment.select('show-info').push({
                                         name: "show-poster-manager-plant",
                                         params: {show: show}
                                     });
@@ -537,16 +527,17 @@ Fragment.plant('show-interface', function (params) {
                     }, "More options");
                 }
             }])
+            
             self.setNavStyle('red500');
             self.id = "show-interface";
-    
+            
             let showViewer = templates['showViewer'].cloneNode(1);
             $t.off().html(showViewer);
-    
+            
             $t.append('<div class="cover"></div>');
-    
+            
             let $posterImg = $t.find('.poster img');
-    
+            
             let posterUrl;
             $posterImg.attr('data-poster', 'show-id-' + show.id);
             if (show.poster) {
@@ -557,26 +548,26 @@ Fragment.plant('show-interface', function (params) {
                 posterUrl = objUrl
                 $posterImg[0].src = objUrl;
             }
-    
+            
             $t.find('.show-name').html(show.name + (show.aired ? ' <span class="aired">(' + show.aired.getFullYear() + ')</span>' : ''));
             $t.find('.show-type').text(show.type);
-    
+            
             console.log('show', show);
-    
-    
+            
+            
             let userPrefs = templates['user-prefs'].cloneNode(1);
             self.append(userPrefs);
-    
+            
             if (show.rating !== undefined) {
                 let rHelper = userPrefs.querySelector(".rating .icon-helper");
-        
+                
                 rHelper.classList.add('fw-bolder');
                 rHelper.textContent = show.rating + "/10"
-        
+                
                 userPrefs.querySelector(".rating .icon").classList.add('active-star');
-        
+                
             }
-    
+            
             if (show.userStatus) {
                 userPrefs.querySelector(".user-status .icon").classList.add(show.userStatus.toLowerCase().split(/\s+/).join('-'));
                 userPrefs.querySelector(".user-status .icon-helper").textContent = show.userStatus;
@@ -586,59 +577,65 @@ Fragment.plant('show-interface', function (params) {
                 userPrefs.querySelector(".status .icon-helper").textContent = show.status;
             }
     
+            if (show.notes) {
+                let summaryElem = create('p', 'personal-note fst-italic m-0 p-3 personal-note text-muted');
+                summaryElem.innerHTML = '<i class="fa-2x fa-comment-lines fa-light fa-pull-left" style="--fa-pull-margin: 1rem;"></i>' + show.notes;
+                self.append(summaryElem);
+            }
+            
             if (show.summary) {
                 let titleElem = create('h2', 'title fs-4');
                 titleElem.textContent = 'Summary';
-        
+                
                 let summaryElem = create('p', 'summary');
                 summaryElem.textContent = show.summary;
                 self.append(titleElem, summaryElem);
             }
-    
-    
+            
+            
             const relatedShows = [show.prequel, show.sequel, show.related].flat().filter(e => e !== undefined);
-    
+            
             let getSeasons = db.seasons.where({showId: show.id}).toArray(),
                 getRelatedShows = relatedShows.length > 0 ? db.shows.where('id').anyOf(relatedShows).toArray() : null;
-    
+            
             Promise.all([getSeasons, getRelatedShows]).then(result => {
                 let [seasons, relatedShows] = result;
-        
-        
+                
+                
                 let container = create('div', 'stacks-in hidden-scroll mx-n3 px-3 mb-4');
                 seasons.forEach((season) => {
                     container.append(generateInternalCard('season', season, show, posterUrl, seasons.length));
                 });
                 let titleElem = create('h2', 'title fs-4');
-        
+                
                 if (show.type === "Movie") {
                     titleElem.textContent = 'Movie list';
                 } else if (show.type === "Anime") {
                     titleElem.textContent = 'Anime parts';
                 } else {
-                    titleElem.textContent = 'Show seasons' + (show.seasonsCount !== undefined ? " ("+show.seasonsCount+")" : "");
+                    titleElem.textContent = 'Show seasons' + (show.seasonsCount !== undefined ? " (" + show.seasonsCount + ")" : "");
                 }
-        
+                
                 self.append(titleElem, container);
-        
+                
                 if (relatedShows) {
                     console.log('relatedShows', relatedShows);
                     // we use reverse because we are using related show's data
                     let prequels = relatedShows.filter(e => e.sequel?.includes(show.id)),
                         sequels = relatedShows.filter(e => e.prequel?.includes(show.id)),
                         related = relatedShows.filter(e => e.related?.includes(show.id));
-            
+                    
                     console.log('prequels', prequels);
                     console.log('sequels', sequels);
                     console.log('related', related);
-            
+                    
                     const content = [prequels, sequels, related],
                         contentType = ["Prequel", "Sequel", "Related"];
-            
+                    
                     let container = create('div', 'stacks-in hidden-scroll mx-n3 px-3 mb-4');
                     let titleElem = create('h2', 'title fs-4');
                     titleElem.textContent = 'Related shows';
-            
+                    
                     content.forEach((relatedShows, contentIndex) => {
                         if (relatedShows.length > 0) {
                             relatedShows.forEach((rShow) => {
@@ -648,27 +645,28 @@ Fragment.plant('show-interface', function (params) {
                             });
                         }
                     })
-            
+                    
                     self.append(titleElem, container);
                 }
             })
-    
+            
             $t.find('img[src="images/pixel.png"]').click(function () {
-                Fragment.select($t.prop('Fragment')).push(  {
+                $t.prop('Fragment').push({
                     name: "show-poster-manager-plant",
                     params: {show: show}
                 });
             });
-    
+            
             $t.find('#quick-show-status').click(function () {
-                Fragment.select($t.prop('Fragment')).push({
+                console.log('found frag', $t.prop('Fragment'), $t);
+                $t.prop('Fragment').push({
                     name: 'show-edit-plant',
                     params: {show: show}
                 })
             });
-    
+            
             $t.find('#quick-user-status').click(function () {
-                Fragment.select($t.prop('Fragment')).push({
+                $t.prop('Fragment').push({
                     name: 'show-classifier-plant',
                     params: {show: show}
                 })
@@ -680,14 +678,299 @@ Fragment.plant('show-interface', function (params) {
         },
         error: error => console.error(error)
     });
-    this.onDestroy = function(){
+    
+    this.onDestroy = function () {
+        console.log('show unsubscribe');
         subscription.unsubscribe();
-        console.log('unsubscribed');
+    }
+    
+    this.onResume = function(){
+        this.setNavStyle('red500');
     }
 });
 
-Fragment.plant('show-classifier-plant', function (params) {
+Fragment.plant('season-interface', function (params) {
+    const season = params.season,
+        show = params.show;
     
+    const seasonObservable = Dexie.liveQuery(() => db.seasons.get({id: params.season.id}));
+    const seasonSubscription = seasonObservable.subscribe({
+        next: season => {
+            console.log('seasonObservable next', season);
+            this.reset();
+            
+            let self = this,
+                $t = $(self);
+    
+            self.id = "season-interface";
+            self.registerNavAction([{
+                name: 'User preferences',
+                icon: 'fa-regular fa-user-gear',
+                action: function () {
+            
+                    // show edit fragment
+            
+            
+                    Fragment.select('season-info').push({
+                        name: "season-classifier-plant",
+                        params: {season: season}
+                    }, "soon's user preferences");
+            
+                }
+            }, {
+                name: "Add details",
+                icon: "fa-regular fa-bars-progress",
+                action: function () {
+                    Fragment.select('season-info').push(function () {
+                        let self = this,
+                            $self = $(self);
+                
+                
+                        $self.html(templates['season-edit-menu'].cloneNode(1));
+                
+                        $self.on('click', 'button', function () {
+                            let $btn = $(this);
+                            switch ($btn.data('action')) {
+                                case "edit-season": {
+                                    console.log('edit season');
+                            
+                                    self.Fragment.push({
+                                        name: 'season-edit-plant',
+                                        params: {
+                                            season: season,
+                                            show: show
+                                        }
+                                    });
+                            
+                                    break;
+                                }
+                                case "edit-season-poster": {
+                                    Fragment.select('season-info').push(function () {
+                                        let self = this,
+                                            $t = $(self);
+                                
+                                        $t.html(templates['upload-image'].cloneNode(1));
+                                
+                                        let $imageUrl = $t.find('#set-image-url'),
+                                            $posterImg = $t.find('.poster img');
+                                
+                                        let $getImage = $t.find('#get-image'),
+                                            $saveBtn = $t.find('#save-image');
+                                
+                                        $posterImg.attr('data-poster', 'season-id-' + season.id);
+                                
+                                        if (season.poster) {
+                                            let objUrl = inflateAndGetObject(season.poster)
+                                            $posterImg[0].onload = function () {
+                                                URL.revokeObjectURL(objUrl);
+                                            }
+                                            $posterImg[0].src = objUrl;
+                                        }
+                                
+                                        let objectUrl;
+                                        $getImage.click(function () {
+                                            let self = this,
+                                                $self = $(self);
+                                    
+                                            let val = $imageUrl.val();
+                                            if (val.trim() === "") {
+                                                alert('add image url');
+                                            } else {
+                                                $self.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+                                                $saveBtn.prop('disabled', true);
+                                        
+                                                console.log('valid url', val);
+                                        
+                                                if (objectUrl) {
+                                                    URL.revokeObjectURL(objectUrl);
+                                                    objectUrl = null;
+                                                }
+                                        
+                                                Helper.getImage(val, true).then(blob => {
+                                                    // save it, we will use it when we confirm adding image
+                                            
+                                                    let imageUrl = URL.createObjectURL(blob)
+                                            
+                                                    objectUrl = imageUrl;
+                                            
+                                                    console.log('blob', blob);
+                                                    console.log('objectUrl', imageUrl);
+                                            
+                                                    $saveBtn.prop('disabled', false);
+                                                    $self.text('Get').prop('disabled', false);
+                                            
+                                                    $posterImg[0].src = imageUrl
+                                                }).catch(n => {
+                                                    console.error(n);
+                                                    $posterImg[0].attr('src', 'images/pixel.png');
+                                                    $saveBtn.prop('disabled', true);
+                                                    $self.text('Get').prop('disabled', false);
+                                                });
+                                        
+                                            }
+                                        })
+                                
+                                        $saveBtn.click(function () {
+                                            console.log('set image to:', 'season' + season.id);
+                                            console.log('objectUrl', objectUrl)
+                                    
+                                            Helper.resizePoster(objectUrl).then(blob => {
+                                                blob.arrayBuffer().then(buffer => {
+                                                    let arrayBuffer = new Uint8Array(buffer);
+                                                    db.seasons.where({id: season.id}).modify(season => {
+                                                        season.poster = pako.deflate(arrayBuffer);
+                                                    }).then(n => {
+                                                        if (n === 1) {
+                                                            document.querySelectorAll('img[data-poster="season-id-' + season.id + '"]').forEach(n => {
+                                                                let obj = URL.createObjectURL(blob);
+                                                                n.onload = function () {
+                                                                    URL.revokeObjectURL(obj);
+                                                                }
+                                                                n.src = obj
+                                                            });
+                                                            URL.revokeObjectURL(objectUrl);
+                                                            console.log('saved');
+                                                    
+                                                            $t.prop('Fragment').back();
+                                                        } else {
+                                                            alert('unexpected reach');
+                                                        }
+                                                    });
+                                                });
+                                            });
+                                        })
+                                
+                                
+                                        if (undefined !== season.poster) {
+                                            let $removePoster = $t.find('#remove-poster');
+                                            $removePoster.prop('disabled', false);
+                                            $removePoster.click(function () {
+                                                if (confirm('remove this season poster?')) {
+                                                    db.seasons.where({id: season.id}).modify(n => {
+                                                        delete n.poster;
+                                                    }).then(n => {
+                                                        console.log('poster removed', n);
+                                                    })
+                                                }
+                                            });
+                                        }
+                                
+                                
+                                    }, (season.name || (show.name + " " + appendOrdinalSuffix(season.position) + " season")) + "'s poster");
+                            
+                                    break;
+                                }
+                                default: {
+                                    console.log('action not found');
+                                }
+                            }
+                        })
+                
+                    }, "Edit season's information");
+                }
+            }]);
+            self.setNavStyle('indigo600');
+            self.setTitle(season.name || (show.name + " " + appendOrdinalSuffix(season.position) + ' part'))
+    
+            let drawing = $(templates['season-header'].cloneNode(true));
+    
+            drawing.find('.season-name').text(season.name || show.name);
+    
+            if (!season.name) {
+                drawing.find('.season-name-prefix').text("Season " + season.position);
+            } else {
+                drawing.find('.season-name-prefix').text(show.name + '\'s');
+            }
+    
+            if (season.aired) {
+                drawing.find('.season-name-extend small').text(season.aired.getFullYear());
+            }
+    
+            $t.html(drawing);
+    
+            $t.append('<div class="cover"></div>');
+    
+    
+            let $posterImg = $t.find('.poster img');
+            $posterImg.attr('data-poster', 'season-id-' + season.id);
+            if (season.poster || show.poster) {
+                let objUrl = inflateAndGetObject(season.poster || show.poster);
+                $posterImg[0].onload = function () {
+                    // URL.revokeObjectURL(objUrl);
+                }
+                $posterImg[0].src = objUrl;
+            }
+    
+    
+            let userPrefs = templates['user-prefs'].cloneNode(1);
+            $t.append(userPrefs);
+    
+            if (season.rating !== undefined) {
+                let rHelper = userPrefs.querySelector(".rating .icon-helper");
+        
+                rHelper.classList.add('fw-bolder');
+                rHelper.textContent = season.rating + "/10"
+        
+                userPrefs.querySelector(".rating .icon").classList.add('active-star');
+        
+            }
+    
+            if (season.userStatus) {
+                console.log('set user-status');
+                console.log(userPrefs.querySelector(".user-status .icon"));
+                userPrefs.querySelector(".user-status .icon").classList.add(season.userStatus.toLowerCase().split(/\s+/).join('-'));
+                userPrefs.querySelector(".user-status .icon-helper").textContent = season.userStatus;
+            }
+            if (season.status) {
+                userPrefs.querySelector(".status .icon").classList.add(season.status.toLowerCase().split(/\s+/).join('-'));
+                userPrefs.querySelector(".status .icon-helper").textContent = season.status;
+            }
+    
+    
+            if (season.notes) {
+                let summaryElem = create('p', 'personal-note fst-italic m-0 p-3 personal-note text-muted');
+                summaryElem.innerHTML = '<i class="fa-2x fa-comment-lines fa-light fa-pull-left" style="--fa-pull-margin: 1rem;"></i>' + season.notes;
+                self.append(summaryElem);
+            }
+    
+            if (season.summary) {
+                let titleElem = create('h2', 'title fs-4');
+                titleElem.textContent = 'Summary';
+        
+                let summaryElem = create('p', 'summary');
+                summaryElem.textContent = season.summary;
+                self.append(titleElem, summaryElem);
+            }
+    
+    
+            $t.find('#quick-show-status').click(function () {
+                $t.prop('Fragment').push({
+                    name: 'season-edit-plant',
+                    params: {
+                        season: season,
+                        show: show
+                    }
+                })
+            });
+    
+            $t.find('#quick-user-status').click(function () {
+                $t.prop('Fragment').push({
+                    name: 'season-classifier-plant',
+                    params: {show: show, season: season}
+                })
+            });
+        },
+        error: error => console.error(error)
+    })
+    
+    this.onDestroy = function () {
+        console.log('season unsubscribe');
+        seasonSubscription.unsubscribe();
+    }
+})
+
+Fragment.plant('show-classifier-plant', function (params) {
+
     const show = params.show;
     
     let $t = $(this);
@@ -715,7 +998,6 @@ Fragment.plant('show-classifier-plant', function (params) {
         
         let checkChanges = Object.entries(changes).filter(n => n[1] !== false);
         if (checkChanges.length !== 0) {
-            
             db.transaction('rw', db.shows, () => {
                 return db.shows.where({id: show.id}).modify(_show => {
                     checkChanges.forEach(n => {
@@ -737,35 +1019,24 @@ Fragment.plant('show-classifier-plant', function (params) {
                 
                 
                 if (changes === 1) {
-    
-                    console.log('user prefs saved');
+                    
                     $t.prop('Fragment').home();
                     
-                    // db.shows.get({id: show.id}).then(show => {
-                    //     $t.prop('Fragment').back();
-                    //
-                    //
-                    //     Fragment.select('show-info').push({
-                    //         name: "show-interface",
-                    //         params: {show: show}
-                    //     }, show.name);
-                    // })
                 } else alert('unexpected results, changes is not 1');
                 
                 
             }).catch(err => {
-                // Transaction aborted. NOT WITHIN ZONE!
                 console.log('err', err);
             });
             
         } else {
-            console.log('no changes');
             $t.prop('Fragment').back();
         }
+        
     });
     
+    
 });
-
 Fragment.plant('season-classifier-plant', function (params) {
     
     const season = params.season;
@@ -813,20 +1084,25 @@ Fragment.plant('season-classifier-plant', function (params) {
                 console.log('changes commit', changes);
                 
                 if (changes === 1) {
-                    Promise.all([db.shows.get({id: season.showId}), db.seasons.get({id: season.id})]).then(result => {
-                        let [show, season] = result;
     
-                        Fragment.select('season-info').destroy();
-    
-                        console.log("season after update", structuredClone(season))
-                        Fragment.select('season-info').push({
-                            name: "season-interface",
-                            params: {
-                                season: season,
-                                show: show
-                            }
-                        }, season.name);
-                    })
+                    console.log('changes 1, go home');
+                    Fragment.select('season-info').home();
+                    
+                    // Promise.all([db.shows.get({id: season.showId}), db.seasons.get({id: season.id})]).then(result => {
+                    //     let [show, season] = result;
+                    //
+                    //     Fragment.select('season-info').destroy();
+                    //
+                    //     console.log("season after update", structuredClone(season))
+                    //     Fragment.select('season-info').push({
+                    //         name: "season-interface",
+                    //         params: {
+                    //             season: season,
+                    //             show: show
+                    //         }
+                    //     }, season.name);
+                    // })
+                    
                 } else alert('unexpected results, changes is not 1');
             }).catch(err => {
                 // Transaction aborted. NOT WITHIN ZONE!
@@ -839,7 +1115,6 @@ Fragment.plant('season-classifier-plant', function (params) {
     });
     
 });
-
 Fragment.plant("show-edit-plant", function (params) {
     const show = params.show;
     
@@ -882,7 +1157,7 @@ Fragment.plant("show-edit-plant", function (params) {
             
             type: showType.val() === show.type ? false : showType.val(),
             
-            aired: showAired.val() === "" ? (show.aired ? 0 : false) : new Date(showAired.val()).getTime() === show.aired?.getTime() ? false : new Date(showAired.val()),
+            aired: showAired.val() === "" ? (show.aired ? 0 : false) : parseDate(showAired.val()).getTime() === show.aired?.getTime() ? false : parseDate(showAired.val()),
             
             summary: showSummary.val().trim() === "" ? (show.summary ? 0 : false) : (showSummary.val() === show.summary ? false : showSummary.val().trim()),
             
@@ -1002,25 +1277,7 @@ Fragment.plant("show-edit-plant", function (params) {
                 
                 // changes should always be 1 because we editing one item
                 if (changes === 1) {
-    
-                    console.log('saved');
                     $t.prop('Fragment').home();
-                    
-                    // db.shows.get({id: show.id}).then(show => {
-                    //     // Fragment.select('show-editor').back();
-                    //     $t.prop('Fragment').back();
-                    //
-                    //     let newCard = generateShowCard(show);
-                    //     document.querySelectorAll('.show-card[data-show-id="' + show.id + '"]').forEach(c => {
-                    //         c.replaceWith(newCard);
-                    //     })
-                    //
-                    //     Fragment.select('show-info').push({
-                    //         name: "show-interface",
-                    //         params: {show: show}
-                    //     }, show.name);
-                    // })
-                    
                 } else alert('changes is not 1 as expected');
                 
             }).catch(err => {
@@ -1037,276 +1294,6 @@ Fragment.plant("show-edit-plant", function (params) {
     
 })
 
-Fragment.plant('season-interface', function (params) {
-    const season = params.season,
-        show = params.show;
-    
-    console.log('season-interface', season);
-    
-    let self = this,
-        $t = $(self);
-    
-    self.id = "season-interface";
-    self.registerNavAction([{
-        name: 'User preferences',
-        icon: 'fa-regular fa-user-gear',
-        action: function () {
-            
-            // show edit fragment
-            
-            
-            Fragment.select('season-info').push({
-                name: "season-classifier-plant",
-                params: {season: season}
-            }, "soon's user preferences");
-            
-        }
-    }, {
-        name: "Add details",
-        icon: "fa-regular fa-bars-progress",
-        action: function () {
-            Fragment.select('season-info').push(function () {
-                let self = this,
-                    $self = $(self);
-                
-                
-                $self.html(templates['season-edit-menu'].cloneNode(1));
-                
-                $self.on('click', 'button', function () {
-                    let $btn = $(this);
-                    switch ($btn.data('action')) {
-                        case "edit-season": {
-                            console.log('edit season');
-                            
-                            self.Fragment.push({
-                                name: 'season-edit-plant',
-                                params: {
-                                    season: season,
-                                    show: show
-                                }
-                            });
-                            
-                            break;
-                        }
-                        case "edit-season-poster": {
-                            Fragment.select('season-info').push(function () {
-                                let self = this,
-                                    $t = $(self);
-                                
-                                $t.html(templates['upload-image'].cloneNode(1));
-                                
-                                let $imageUrl = $t.find('#set-image-url'),
-                                    $posterImg = $t.find('.poster img');
-                                
-                                let $getImage = $t.find('#get-image'),
-                                    $saveBtn = $t.find('#save-image');
-                                
-                                $posterImg.attr('data-poster', 'season-id-' + season.id);
-                                
-                                if (season.poster) {
-                                    let objUrl = inflateAndGetObject(season.poster)
-                                    $posterImg[0].onload = function () {
-                                        URL.revokeObjectURL(objUrl);
-                                    }
-                                    $posterImg[0].src = objUrl;
-                                }
-                                
-                                let objectUrl;
-                                $getImage.click(function () {
-                                    let self = this,
-                                        $self = $(self);
-                                    
-                                    let val = $imageUrl.val();
-                                    if (val.trim() === "") {
-                                        alert('add image url');
-                                    } else {
-                                        $self.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
-                                        $saveBtn.prop('disabled', true);
-                                        
-                                        console.log('valid url', val);
-                                        
-                                        if (objectUrl) {
-                                            URL.revokeObjectURL(objectUrl);
-                                            objectUrl = null;
-                                        }
-                                        
-                                        Helper.getImage(val, true).then(blob => {
-                                            // save it, we will use it when we confirm adding image
-                                            
-                                            let imageUrl = URL.createObjectURL(blob)
-                                            
-                                            objectUrl = imageUrl;
-                                            
-                                            console.log('blob', blob);
-                                            console.log('objectUrl', imageUrl);
-                                            
-                                            $saveBtn.prop('disabled', false);
-                                            $self.text('Get').prop('disabled', false);
-                                            
-                                            $posterImg[0].src = imageUrl
-                                        }).catch(n => {
-                                            console.error(n);
-                                            $posterImg[0].attr('src', 'images/pixel.png');
-                                            $saveBtn.prop('disabled', true);
-                                            $self.text('Get').prop('disabled', false);
-                                        });
-                                        
-                                    }
-                                })
-                                
-                                $saveBtn.click(function () {
-                                    console.log('set image to:', 'season' + season.id);
-                                    console.log('objectUrl', objectUrl)
-                                    
-                                    Helper.resizePoster(objectUrl).then(blob => {
-                                        blob.arrayBuffer().then(buffer => {
-                                            let arrayBuffer = new Uint8Array(buffer);
-                                            db.seasons.where({id: season.id}).modify(season => {
-                                                season.poster = pako.deflate(arrayBuffer);
-                                            }).then(n => {
-                                                if (n === 1) {
-                                                    document.querySelectorAll('img[data-poster="season-id-' + season.id + '"]').forEach(n => {
-                                                        let obj = URL.createObjectURL(blob);
-                                                        n.onload = function () {
-                                                            URL.revokeObjectURL(obj);
-                                                        }
-                                                        n.src = obj
-                                                    });
-                                                    URL.revokeObjectURL(objectUrl);
-                                                    console.log('saved');
-                                                    
-                                                    $t.prop('Fragment').back();
-                                                } else {
-                                                    alert('unexpected reach');
-                                                }
-                                            });
-                                        });
-                                    });
-                                })
-                                
-                                
-                                if (undefined !== season.poster) {
-                                    let $removePoster = $t.find('#remove-poster');
-                                    $removePoster.prop('disabled', false);
-                                    $removePoster.click(function () {
-                                        if (confirm('remove this season poster?')) {
-                                            db.seasons.where({id: season.id}).modify(n => {
-                                                delete n.poster;
-                                            }).then(n => {
-                                                console.log('poster removed', n);
-                                            })
-                                        }
-                                    });
-                                }
-                                
-                                
-                            }, (season.name || (show.name + " " + appendOrdinalSuffix(season.position) + " season")) + "'s poster");
-                            
-                            break;
-                        }
-                        default: {
-                            console.log('action not found');
-                        }
-                    }
-                })
-                
-            }, "Edit season's information");
-        }
-    }]);
-    self.setNavStyle('indigo600');
-    self.setTitle(season.name || (show.name + " " + appendOrdinalSuffix(season.position) + ' part'))
-    
-    let drawing = $(templates['season-header'].cloneNode(true));
-    
-    drawing.find('.season-name').text(season.name || show.name);
-    
-    if (!season.name) {
-        drawing.find('.season-name-prefix').text("Season " + season.position);
-    } else {
-        drawing.find('.season-name-prefix').text(show.name + '\'s');
-    }
-    
-    if(season.aired){
-        drawing.find('.season-name-extend small').text(season.aired.getFullYear());
-    }
-    
-    $t.html(drawing);
-    
-    $t.append('<div class="cover"></div>');
-    
-    
-    let $posterImg = $t.find('.poster img');
-    $posterImg.attr('data-poster', 'season-id-' + season.id);
-    if (season.poster || show.poster) {
-        let objUrl = inflateAndGetObject(season.poster || show.poster);
-        $posterImg[0].onload = function () {
-            // URL.revokeObjectURL(objUrl);
-        }
-        $posterImg[0].src = objUrl;
-    }
-    
-    
-    let userPrefs = templates['user-prefs'].cloneNode(1);
-    $t.append(userPrefs);
-    
-    if (season.rating !== undefined) {
-        let rHelper = userPrefs.querySelector(".rating .icon-helper");
-        
-        rHelper.classList.add('fw-bolder');
-        rHelper.textContent = season.rating + "/10"
-        
-        userPrefs.querySelector(".rating .icon").classList.add('active-star');
-        
-    }
-    
-    if (season.userStatus) {
-        console.log('set user-status');
-        console.log(userPrefs.querySelector(".user-status .icon"));
-        userPrefs.querySelector(".user-status .icon").classList.add(season.userStatus.toLowerCase().split(/\s+/).join('-'));
-        userPrefs.querySelector(".user-status .icon-helper").textContent = season.userStatus;
-    }
-    if (season.status) {
-        userPrefs.querySelector(".status .icon").classList.add(season.status.toLowerCase().split(/\s+/).join('-'));
-        userPrefs.querySelector(".status .icon-helper").textContent = season.status;
-    }
-    
-    
-    if (season.notes) {
-        let summaryElem = create('p', 'personal-note fst-italic m-0 p-3 personal-note text-muted');
-        summaryElem.innerHTML = '<i class="fa-2x fa-comment-lines fa-light fa-pull-left" style="--fa-pull-margin: 1rem;"></i>' + season.notes;
-        self.append(summaryElem);
-    }
-    
-    if (season.summary) {
-        let titleElem = create('h2', 'title fs-4');
-        titleElem.textContent = 'Summary';
-        
-        let summaryElem = create('p', 'summary');
-        summaryElem.textContent = season.summary;
-        self.append(titleElem, summaryElem);
-    }
-    
-    
-    
-    
-    $t.find('#quick-show-status').click(function () {
-        Fragment.select($t.prop('Fragment')).push({
-            name: 'season-edit-plant',
-            params: {
-                season: season,
-                show: show
-            }
-        })
-    });
-    
-    $t.find('#quick-user-status').click(function () {
-        Fragment.select($t.prop('Fragment')).push({
-            name: 'season-classifier-plant',
-            params: {show: show, season: season}
-        })
-    });
-})
-
 Fragment.plant("season-edit-plant", function (params) {
     const season = params.season,
         show = params.show;
@@ -1319,12 +1306,14 @@ Fragment.plant("season-edit-plant", function (params) {
     $t.html(templates['season-edit-form'].cloneNode(1));
     
     
-    let seasonAired = $t.find('#edit-season-aired'),
+    let seasonName = $t.find('#edit-season-name'),
+        seasonAired = $t.find('#edit-season-aired'),
         seasonSummary = $t.find('#edit-season-summary'),
         seasonEpisodesCount = $t.find('#edit-season-episodes-count'),
         seasonLastWatchedEpisode = $t.find('#edit-season-last-watched-episode'),
         seasonStatus = $t.find('#edit-season-status');
     
+    seasonName.val(season.name ?? "");
     seasonAired.val(season.aired ? Helper.formatDate(season.aired) : "");
     seasonSummary.val(season.summary ?? "");
     seasonEpisodesCount.val(season.episodesCount ?? "");
@@ -1334,9 +1323,9 @@ Fragment.plant("season-edit-plant", function (params) {
     
     $t.find('#season-edit-form').submit(function () {
         
-        
         let changes = {
-            aired: seasonAired.val() === "" ? (season.aired ? 0 : false) : new Date(seasonAired.val()).getTime() === season.aired?.getTime() ? false : new Date(seasonAired.val()),
+            name: seasonName.val().trim() === "" ? (season.name ? 0 : false) : (seasonName.val() === season.name ? false : seasonName.val().trim()),
+            aired: seasonAired.val() === "" ? (season.aired ? 0 : false) : parseDate(seasonAired.val()).getTime() === season.aired?.getTime() ? false : parseDate(seasonAired.val()),
             summary: seasonSummary.val().trim() === "" ? (season.summary ? 0 : false) : (seasonSummary.val() === season.summary ? false : seasonSummary.val().trim()),
             episodesCount: seasonEpisodesCount.val() === "" ? (season.episodesCount !== undefined ? 0 : false) : (parseInt(seasonEpisodesCount.val()) === season.episodesCount ? false : parseInt(seasonEpisodesCount.val())),
             lastWatchedEpisode: seasonLastWatchedEpisode.val() === "" ? (season.lastWatchedEpisode !== undefined ? 0 : false) : (parseInt(seasonLastWatchedEpisode.val()) === season.lastWatchedEpisode ? false : parseInt(seasonLastWatchedEpisode.val())),
@@ -1362,19 +1351,20 @@ Fragment.plant("season-edit-plant", function (params) {
             }).then(changes => {
                 
                 console.log("Then is hit, changes", changes);
+                console.log('go home');
+                $t.prop('Fragment').home();
                 
-                db.seasons.get({id: season.id}).then(season => {
-                    $t.prop('Fragment').clear();
-                    console.log('cleared');
-                    $t.prop('Fragment').push({
-                        name: "season-interface",
-                        params: {
-                            season: season,
-                            show: show
-                        }
-                    });
-                })
-                
+                // db.seasons.get({id: season.id}).then(season => {
+                //     $t.prop('Fragment').clear();
+                //     console.log('cleared');
+                //     $t.prop('Fragment').push({
+                //         name: "season-interface",
+                //         params: {
+                //             season: season,
+                //             show: show
+                //         }
+                //     });
+                // })
             }).catch(err => {
                 // Transaction aborted. NOT WITHIN ZONE!
                 console.warn('err', err);
@@ -1390,7 +1380,6 @@ Fragment.plant("season-edit-plant", function (params) {
     });
     
 });
-
 Fragment.plant('show-poster-manager-plant', function (params) {
     const show = params.show;
     
@@ -1490,6 +1479,8 @@ Fragment.plant('show-poster-manager-plant', function (params) {
         });
     })
     
+
+    
     if (undefined !== show.poster) {
         let $removePoster = $t.find('#remove-poster');
         $removePoster.prop('disabled', false);
@@ -1548,7 +1539,11 @@ function generateInternalCard(type, item, seasonShow, showPoster, numberOfSeason
     
     let cardContent = create('div');
     if (type === 'season') {
-        cardContent.appendHTML('<h3 class="stack-in-card-title">' + ((item.name || seasonShow.name) + (item.aired ? ' <span class="aired">(' + item.aired.getFullYear() + ')</span>' : '') + (numberOfSeasons > 1 ? ' <span class="season-position">(' + item.position + '/' + numberOfSeasons + ')</span>' : '')) + '</h3>')
+        cardContent.appendHTML('<h3 class="stack-in-card-title">' + ((item.name || seasonShow.name) + (item.aired ? ' <span class="aired">(' + item.aired.getFullYear() + ')</span>' : '')) + '</h3>')
+        
+        let moreInfo = create('div', 'season-more-info');
+        moreInfo.appendHTML( (numberOfSeasons > 1 ? ' <span class="season-position">(' + item.position + '/' + numberOfSeasons + ')</span>' : ''))
+        cardContent.append(moreInfo);
     } else {
         cardContent.appendHTML('<h3 class="stack-in-card-title">' + item.name + (item.aired ? ' <span class="aired">(' + item.aired.getFullYear() + ')</span>' : '') + '</h3>')
     }
@@ -1563,9 +1558,7 @@ db.shows.toArray().then(shows => {
     
     let stack = create('div', 'stack');
     stack.appendHTML('<h2 class="stack-title">Shows in Database</h2><div class="shows-list"><div class="show-list-inner"></div></div>');
-    
     let container = stack.querySelector('.show-list-inner');
-    
     shows.forEach(show => {
         container.append(generateShowCard(show))
     })
