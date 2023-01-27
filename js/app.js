@@ -53,6 +53,7 @@ const reverseRelation = {
 }
 const validDateFormat = /^(?:(?:(?<Day>(?:3[0-1]|[1-2]\d|0?[1-9]))(?:[\s/-]))?(?<Month>(?:(?:1[0-2]|0?[1-9])|jan(?:uary|\.)?|feb(?:ruary|\.)?|mar(?:ch|\.)?|apr(?:il|\.)?|may.?|june?\.?|july?\.?|aug(?:ust)?\.?|sep(?:t|tember)?\.?|Oct(?:ober)?\.?|nov(?:ember)?\.?|dec(?:ember)?\.?))(?:[\s/-]))?(?<Year>\d{4})$/i
 
+
 document.querySelector('.add-show').addEventListener('click', function () {
     Fragment.select('shows-adder').push(function () {
         let self = this,
@@ -687,7 +688,6 @@ Fragment.plant('show-interface', function (params) {
         this.setNavStyle('red500');
     }
 });
-
 Fragment.plant('season-interface', function (params) {
     const season = params.season,
         show = params.show;
@@ -967,7 +967,6 @@ Fragment.plant('season-interface', function (params) {
         seasonSubscription.unsubscribe();
     }
 })
-
 Fragment.plant('show-classifier-plant', function (params) {
     
     const show = params.show;
@@ -1292,7 +1291,6 @@ Fragment.plant("show-edit-plant", function (params) {
     });
     
 })
-
 Fragment.plant("season-edit-plant", function (params) {
     const season = params.season,
         show = params.show;
@@ -1556,16 +1554,18 @@ const $showcase = $('.showcase'),
     collections = [
         ["Unclassified titles", show => !show.userStatus],
         ["I'm watching", show => show.userStatus === "Watching"],
+        ["I Paused", show => show.userStatus === "On-Hold"],
         ["I'm waiting", show => show.userStatus === "Pending"],
         ["I Plan to watch", show => show.userStatus === "Plan to Watch"],
         ["Completed", show => show.userStatus === "Completed"],
         ["Dropped shows", show => show.userStatus === "Dropped"],
     ];
 
-Dexie.liveQuery(() => db.shows.toArray()).subscribe({
+
+const observable = Dexie.liveQuery(() => db.shows.toArray());
+const observingFunction = {
     next: shows => {
         console.log('shows', shows);
-        
         
         $showcase.empty();
         
@@ -1594,4 +1594,32 @@ Dexie.liveQuery(() => db.shows.toArray()).subscribe({
         
         
     }
+}
+let subscription = observable.subscribe(observingFunction)
+
+$showcase.on('active', function () {
+    subscription = observable.subscribe(observingFunction);
+}).on('inactive', function () {
+    subscription.unsubscribe()
+});
+
+
+let $drawer = $('.drawer'),
+    $drawerContainer = $('.drawer-container'),
+    $drawerDim = $('.drawer-dim'),
+    drawerOpen = false;
+
+$('#toggle-drawer').click(function(){
+    if(drawerOpen){
+        $drawerContainer.removeClass('open');
+        drawerOpen = false;
+    } else {
+        $drawerContainer.addClass('open');
+        drawerOpen = true;
+    }
+})
+
+$drawerDim.click(function () {
+    $drawerContainer.removeClass('open');
+    drawerOpen = false;
 })

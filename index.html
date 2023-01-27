@@ -27,9 +27,25 @@
 
 <body>
 
+<nav id='top-nav' class="flex-nowrap gap-2 navbar px-2 red500">
+    <button id='toggle-drawer' class="btn fw-bold text-black" data-bs-title="menu" type="button">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+    <small class="fragment-title navbar-text text-nowrap text-truncate w-100">Brain Memory</small>
+    <div class="nav-actions d-flex">
+        <button id='nav-search' class="btn" data-bs-title="search shows"><i class="fa-regular fa-search"></i></button>
+    </div>
+</nav>
 
 <div class="showcase">
 
+</div>
+
+<div class="drawer-container">
+    <div class="drawer open">
+        <div>some content here</div>
+    </div>
+    <div class="drawer-dim"></div>
 </div>
 
 <span class="add-show">
@@ -71,12 +87,7 @@
         <div class="shows-search-results mb-3"></div>
         <div class="mb-3">
             <label class="form-label" for="show-relation">Relation</label>
-            <select class="form-select" id="show-relation" required>
-                <option selected></option>
-                <option>sequel</option>
-                <option>prequel</option>
-                <option>related</option>
-            </select>
+            <select class="form-select" data-init-select="title-relations" id="show-relation" required></select>
             <div class="form-text">Mark any show that is related but not a prequel or sequel as related</div>
         </div>
         <button class="btn btn-primary" disabled type="submit">Submit</button>
@@ -113,13 +124,8 @@
         </div>
         <div class="mb-3">
             <label class="form-label" for="new-show-type">Show type</label>
-            <select aria-label="Default select example" class="form-select" id="new-show-type" required>
-                <option selected></option>
-                <option>TV series</option>
-                <option>TV Mini Series</option>
-                <option>Movie</option>
-                <option>Anime</option>
-            </select>
+            <select aria-label="Default select example" class="form-select" data-init-select="titles-types"
+                    id="new-show-type" required></select>
         </div>
         <div class="mb-3">
             <label class="form-label" for="new-show-seasons-count">Number of seasons</label>
@@ -179,13 +185,8 @@
         </div>
         <div class="mb-3">
             <label class="form-label" for="edit-show-type">Show type</label>
-            <select aria-label="Default select example" class="form-select" id="edit-show-type" required>
-                <option selected></option>
-                <option>TV series</option>
-                <option>TV Mini Series</option>
-                <option>Movie</option>
-                <option>Anime</option>
-            </select>
+            <select aria-label="Default select example" class="form-select" data-init-select="titles-types"
+                    id="edit-show-type" required></select>
         </div>
         <div class="mb-3">
             <label class="form-label" for="edit-show-aired">Air date</label>
@@ -208,26 +209,12 @@
 
         <div class="mb-3">
             <label class="form-label" for="edit-show-status">Show status</label>
-            <select class="form-select" id='edit-show-status'>
-                <option selected></option>
-                <option value="upcoming">Upcoming</option>
-                <option value="ongoing">Ongoing</option>
-                <option value="ended">Ended</option>
-                <option value="canceled">Canceled</option>
-            </select>
+            <select class="form-select" data-init-select="show-status" id='edit-show-status'></select>
         </div>
 
         <div class="mb-3">
             <label class="form-label" for="edit-show-language">Language</label>
-            <select class="form-select" id='edit-show-language'>
-                <option></option>
-                <option>English</option>
-                <option>Korean</option>
-                <option>Spanish</option>
-                <option>Japanese</option>
-                <option>French</option>
-                <option>Other</option>
-            </select>
+            <select class="form-select" data-init-select="titles-languages" id='edit-show-language'></select>
         </div>
 
         <div class="mb-3">
@@ -264,7 +251,7 @@
             <input class="form-control"
                    id="edit-season-aired"
                    onblur="this.value === '' || validDateFormat.test(this.value) ? (this.setCustomValidity(''), this.classList.remove('is-invalid')) : (this.setCustomValidity('invalid date format'), this.classList.add('is-invalid'))"
-                    type="text">
+                   type="text">
             <div class="form-text">The year of which the season is released, leave it empty if you don't know</div>
         </div>
 
@@ -286,13 +273,7 @@
 
         <div class="mb-3">
             <label class="form-label" for="edit-season-status">season status</label>
-            <select class="form-select" id='edit-season-status'>
-                <option selected></option>
-                <option value="upcoming">Upcoming</option>
-                <option value="ongoing">Ongoing</option>
-                <option value="ended">Ended</option>
-                <option value="pending">Pending</option>
-            </select>
+            <select class="form-select" data-init-select="show-status" id='edit-season-status'></select>
         </div>
 
         <div class="mt-4 text-end text-sm-start">
@@ -372,11 +353,11 @@
                 </div>
             </div>
             <div class="input-group mt-3">
-                <input class="form-control" id="set-image-url" placeholder="xxx.png" type="text" autocomplete="off">
+                <input autocomplete="off" class="form-control" id="set-image-url" placeholder="xxx.png" type="text">
                 <button class="btn btn-outline-secondary" id="get-image" type="button">Get</button>
                 <button class="btn btn-outline-primary" disabled="" id="save-image" type="button">Save</button>
             </div>
-            <button disabled id='remove-poster' type="button" class="btn btn-danger btn-sm mt-4">remove poster</button>
+            <button class="btn btn-danger btn-sm mt-4" disabled id='remove-poster' type="button">remove poster</button>
         </div>
     </div>
 
@@ -385,34 +366,14 @@
             <label class="form-label" for="edit-show-userStatus">
                 <i class="fa-tv-retro fa-regular fa-fw me-2"></i>User status
             </label>
-            <select class="form-select" id="edit-show-userStatus">
-                <option selected=""></option>
-                <option>Watching</option>
-                <option>Completed</option>
-                <option>On-Hold</option>
-                <option>Dropped</option>
-                <option>Plan to Watch</option>
-                <option>Pending</option>
-            </select>
+            <select class="form-select" data-init-select="title-user-status" id="edit-show-userStatus"></select>
         </div>
 
         <div class="mb-3">
             <label class="form-label" for="edit-show-rating">
                 <i class="fa-star-half-stroke fa-regular fa-fw me-2"></i>User Rating
             </label>
-            <select class="form-select" id="edit-show-rating">
-                <option selected=""></option>
-                <option value="10">10 - Masterpiece</option>
-                <option value="9">9 - Great</option>
-                <option value="8">8 - Very Good</option>
-                <option value="7">7 - Good</option>
-                <option value="6">6 - Fine</option>
-                <option value="5">5 - Average</option>
-                <option value="4">4 - Bad</option>
-                <option value="3">3 - Very Bad</option>
-                <option value="2">2 - Horrible</option>
-                <option value="1">1 - Appalling</option>
-            </select>
+            <select class="form-select" data-init-select="title-rating" id="edit-show-rating"></select>
         </div>
         <div class="mb-3">
             <label class="form-label" for="edit-show-notes">
@@ -429,34 +390,14 @@
             <label class="form-label" for="edit-season-userStatus">
                 <i class="fa-tv-retro fa-regular fa-fw me-2"></i>User status
             </label>
-            <select class="form-select" id="edit-season-userStatus">
-                <option selected=""></option>
-                <option>Watching</option>
-                <option>Completed</option>
-                <option>On-Hold</option>
-                <option>Dropped</option>
-                <option>Plan to Watch</option>
-                <option>Pending</option>
-            </select>
+            <select class="form-select" data-init-select="title-user-status" id="edit-season-userStatus"></select>
         </div>
 
         <div class="mb-3">
             <label class="form-label" for="edit-season-rating">
                 <i class="fa-star-half-stroke fa-regular fa-fw me-2"></i>User Rating
             </label>
-            <select class="form-select" id="edit-season-rating">
-                <option selected=""></option>
-                <option value="10">10 - Masterpiece</option>
-                <option value="9">9 - Great</option>
-                <option value="8">8 - Very Good</option>
-                <option value="7">7 - Good</option>
-                <option value="6">6 - Fine</option>
-                <option value="5">5 - Average</option>
-                <option value="4">4 - Bad</option>
-                <option value="3">3 - Very Bad</option>
-                <option value="2">2 - Horrible</option>
-                <option value="1">1 - Appalling</option>
-            </select>
+            <select class="form-select" data-init-select="title-rating" id="edit-season-rating"></select>
         </div>
         <div class="mb-3">
             <label class="form-label" for="edit-season-notes">
@@ -492,7 +433,9 @@
 </template>
 
 
-<div id="fragments"><div id="fragment-dim"></div></div>
+<div id="fragments">
+    <div id="fragment-dim"></div>
+</div>
 
 <script src="libraries/jQuery/jquery.js"></script>
 <script src="libraries/Dexie.js-3.2.2/dist/dexie.js"></script>

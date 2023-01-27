@@ -17,11 +17,13 @@ const Fragment = (() => {
         #stack = [];
         
         constructor(id) {
+            
+            if(activities.size === 0) $showcase.trigger('inactive');
+            
             this.id = id;
             let frag = create('div', 'fragment');
             frag.dataset.id = id
             fragmentContainer.appendChild(frag);
-            
             this.frag = frag
             this.showDim();
         }
@@ -150,6 +152,10 @@ const Fragment = (() => {
                     // hide the dim only if there are no other fragments
                     if (activities.size === 0) {
                         this.hideDim();
+    
+                        // notify showcase that it's now active
+                        $showcase.trigger('active');
+                        
                     } else {
                         // find the active fragment and notify it
                         Fragment.getActiveFragment().stacks.at(-1).lastElementChild.onResume?.();
@@ -176,6 +182,7 @@ const Fragment = (() => {
             // hide the dim only if there are no other fragments
             if (activities.size === 0) {
                 this.hideDim();
+                $showcase.trigger('active');
             } else {
                 
                 // find the active fragment and notify it

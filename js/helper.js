@@ -197,7 +197,40 @@ window.addEventListener('load', () => {
     }, 200)
 });
 
-const templates = Object.assign({}, ...Array.from(document.querySelector('#template').content.children).map(n => ({[n.id || n.dataset.templateName]: n})));
+const templateContent = document.querySelector('#template').content
+const selectOptions = {
+    "titles-types": ["TV series", "TV Mini Series", "Movie", "Anime"],
+    "show-status": ["Upcoming", "Ongoing", "Ended", "Canceled"],
+    "title-user-status": ["Watching", "Completed", "On-Hold", "Dropped", "Plan to Watch", "Pending"],
+    "title-rating": [
+        [10, "10 - Masterpiece"],
+        [9, "9 - Great"],
+        [8, "8 - Very Good"],
+        [7, "7 - Good"],
+        [6, "6 - Fine"],
+        [5, "5 - Average"],
+        [4, "4 - Bad"],
+        [3, "3 - Very Bad"],
+        [2, "2 - Horrible"],
+        [1, "1 - Appalling"]
+    ],
+    "titles-languages": ["English", "Korean", "Spanish", "Japanese", "French", "Other"],
+    "title-relations": ["sequel", "prequel", "related"]
+    
+}
+
+// init selects
+templateContent.querySelectorAll('select[data-init-select]').forEach(select => {
+    console.log(select.dataset.initSelect);
+    if (selectOptions[select.dataset.initSelect]) {
+        select.innerHTML = `<option selected></option>` + selectOptions[select.dataset.initSelect]
+            .map((value) => typeof value === "string" ? `<option>${value}</option>` : `<option value="${value[0]}">${value[1]}</option>`).join('');
+    } else {
+        throw select.dataset.initSelect + " is not found in selectOptions"
+    }
+});
+
+const templates = Object.assign({}, ...Array.from(templateContent.children).map(n => ({[n.id || n.dataset.templateName]: n})));
 
 
 const Helper = (() => {
