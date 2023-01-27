@@ -103,7 +103,7 @@ document.querySelector('.add-show').addEventListener('click', function () {
                 self.Fragment.destroy();
                 db.shows.get({id: addedShowId}).then(show => {
                     $('.show-list-inner').append(generateShowCard(show))
-        
+                    
                     console.log('open show-info-interface');
                     Fragment.select('show-info').push({
                         name: "show-interface",
@@ -122,9 +122,8 @@ document.querySelector('.add-show').addEventListener('click', function () {
 });
 
 Fragment.plant('show-interface', function (params) {
-
-    const showsObservable = Dexie.liveQuery(() => db.shows.get({id: params.showId}));
     
+    const showsObservable = Dexie.liveQuery(() => db.shows.get({id: params.showId}));
     const subscription = showsObservable.subscribe({
         next: show => {
             console.log('subscription next');
@@ -576,7 +575,7 @@ Fragment.plant('show-interface', function (params) {
                 userPrefs.querySelector(".status .icon").classList.add(show.status.toLowerCase().split(/\s+/).join('-'));
                 userPrefs.querySelector(".status .icon-helper").textContent = show.status;
             }
-    
+            
             if (show.notes) {
                 let summaryElem = create('p', 'personal-note fst-italic m-0 p-3 personal-note text-muted');
                 summaryElem.innerHTML = '<i class="fa-2x fa-comment-lines fa-light fa-pull-left" style="--fa-pull-margin: 1rem;"></i>' + show.notes;
@@ -684,7 +683,7 @@ Fragment.plant('show-interface', function (params) {
         subscription.unsubscribe();
     }
     
-    this.onResume = function(){
+    this.onResume = function () {
         this.setNavStyle('red500');
     }
 });
@@ -701,21 +700,21 @@ Fragment.plant('season-interface', function (params) {
             
             let self = this,
                 $t = $(self);
-    
+            
             self.id = "season-interface";
             self.registerNavAction([{
                 name: 'User preferences',
                 icon: 'fa-regular fa-user-gear',
                 action: function () {
-            
+                    
                     // show edit fragment
-            
-            
+                    
+                    
                     Fragment.select('season-info').push({
                         name: "season-classifier-plant",
                         params: {season: season}
                     }, "soon's user preferences");
-            
+                    
                 }
             }, {
                 name: "Add details",
@@ -724,16 +723,16 @@ Fragment.plant('season-interface', function (params) {
                     Fragment.select('season-info').push(function () {
                         let self = this,
                             $self = $(self);
-                
-                
+                        
+                        
                         $self.html(templates['season-edit-menu'].cloneNode(1));
-                
+                        
                         $self.on('click', 'button', function () {
                             let $btn = $(this);
                             switch ($btn.data('action')) {
                                 case "edit-season": {
                                     console.log('edit season');
-                            
+                                    
                                     self.Fragment.push({
                                         name: 'season-edit-plant',
                                         params: {
@@ -741,24 +740,24 @@ Fragment.plant('season-interface', function (params) {
                                             show: show
                                         }
                                     });
-                            
+                                    
                                     break;
                                 }
                                 case "edit-season-poster": {
                                     Fragment.select('season-info').push(function () {
                                         let self = this,
                                             $t = $(self);
-                                
+                                        
                                         $t.html(templates['upload-image'].cloneNode(1));
-                                
+                                        
                                         let $imageUrl = $t.find('#set-image-url'),
                                             $posterImg = $t.find('.poster img');
-                                
+                                        
                                         let $getImage = $t.find('#get-image'),
                                             $saveBtn = $t.find('#save-image');
-                                
+                                        
                                         $posterImg.attr('data-poster', 'season-id-' + season.id);
-                                
+                                        
                                         if (season.poster) {
                                             let objUrl = inflateAndGetObject(season.poster)
                                             $posterImg[0].onload = function () {
@@ -766,39 +765,39 @@ Fragment.plant('season-interface', function (params) {
                                             }
                                             $posterImg[0].src = objUrl;
                                         }
-                                
+                                        
                                         let objectUrl;
                                         $getImage.click(function () {
                                             let self = this,
                                                 $self = $(self);
-                                    
+                                            
                                             let val = $imageUrl.val();
                                             if (val.trim() === "") {
                                                 alert('add image url');
                                             } else {
                                                 $self.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
                                                 $saveBtn.prop('disabled', true);
-                                        
+                                                
                                                 console.log('valid url', val);
-                                        
+                                                
                                                 if (objectUrl) {
                                                     URL.revokeObjectURL(objectUrl);
                                                     objectUrl = null;
                                                 }
-                                        
+                                                
                                                 Helper.getImage(val, true).then(blob => {
                                                     // save it, we will use it when we confirm adding image
-                                            
+                                                    
                                                     let imageUrl = URL.createObjectURL(blob)
-                                            
+                                                    
                                                     objectUrl = imageUrl;
-                                            
+                                                    
                                                     console.log('blob', blob);
                                                     console.log('objectUrl', imageUrl);
-                                            
+                                                    
                                                     $saveBtn.prop('disabled', false);
                                                     $self.text('Get').prop('disabled', false);
-                                            
+                                                    
                                                     $posterImg[0].src = imageUrl
                                                 }).catch(n => {
                                                     console.error(n);
@@ -806,14 +805,14 @@ Fragment.plant('season-interface', function (params) {
                                                     $saveBtn.prop('disabled', true);
                                                     $self.text('Get').prop('disabled', false);
                                                 });
-                                        
+                                                
                                             }
                                         })
-                                
+                                        
                                         $saveBtn.click(function () {
                                             console.log('set image to:', 'season' + season.id);
                                             console.log('objectUrl', objectUrl)
-                                    
+                                            
                                             Helper.resizePoster(objectUrl).then(blob => {
                                                 blob.arrayBuffer().then(buffer => {
                                                     let arrayBuffer = new Uint8Array(buffer);
@@ -830,7 +829,7 @@ Fragment.plant('season-interface', function (params) {
                                                             });
                                                             URL.revokeObjectURL(objectUrl);
                                                             console.log('saved');
-                                                    
+                                                            
                                                             $t.prop('Fragment').back();
                                                         } else {
                                                             alert('unexpected reach');
@@ -839,8 +838,8 @@ Fragment.plant('season-interface', function (params) {
                                                 });
                                             });
                                         })
-                                
-                                
+                                        
+                                        
                                         if (undefined !== season.poster) {
                                             let $removePoster = $t.find('#remove-poster');
                                             $removePoster.prop('disabled', false);
@@ -854,10 +853,10 @@ Fragment.plant('season-interface', function (params) {
                                                 }
                                             });
                                         }
-                                
-                                
+                                        
+                                        
                                     }, (season.name || (show.name + " " + appendOrdinalSuffix(season.position) + " season")) + "'s poster");
-                            
+                                    
                                     break;
                                 }
                                 default: {
@@ -865,32 +864,32 @@ Fragment.plant('season-interface', function (params) {
                                 }
                             }
                         })
-                
+                        
                     }, "Edit season's information");
                 }
             }]);
             self.setNavStyle('indigo600');
             self.setTitle(season.name || (show.name + " " + appendOrdinalSuffix(season.position) + ' part'))
-    
+            
             let drawing = $(templates['season-header'].cloneNode(true));
-    
+            
             drawing.find('.season-name').text(season.name || show.name);
-    
+            
             if (!season.name) {
                 drawing.find('.season-name-prefix').text("Season " + season.position);
             } else {
                 drawing.find('.season-name-prefix').text(show.name + '\'s');
             }
-    
+            
             if (season.aired) {
                 drawing.find('.season-name-extend small').text(season.aired.getFullYear());
             }
-    
+            
             $t.html(drawing);
-    
+            
             $t.append('<div class="cover"></div>');
-    
-    
+            
+            
             let $posterImg = $t.find('.poster img');
             $posterImg.attr('data-poster', 'season-id-' + season.id);
             if (season.poster || show.poster) {
@@ -900,21 +899,21 @@ Fragment.plant('season-interface', function (params) {
                 }
                 $posterImg[0].src = objUrl;
             }
-    
-    
+            
+            
             let userPrefs = templates['user-prefs'].cloneNode(1);
             $t.append(userPrefs);
-    
+            
             if (season.rating !== undefined) {
                 let rHelper = userPrefs.querySelector(".rating .icon-helper");
-        
+                
                 rHelper.classList.add('fw-bolder');
                 rHelper.textContent = season.rating + "/10"
-        
+                
                 userPrefs.querySelector(".rating .icon").classList.add('active-star');
-        
+                
             }
-    
+            
             if (season.userStatus) {
                 console.log('set user-status');
                 console.log(userPrefs.querySelector(".user-status .icon"));
@@ -925,24 +924,24 @@ Fragment.plant('season-interface', function (params) {
                 userPrefs.querySelector(".status .icon").classList.add(season.status.toLowerCase().split(/\s+/).join('-'));
                 userPrefs.querySelector(".status .icon-helper").textContent = season.status;
             }
-    
-    
+            
+            
             if (season.notes) {
                 let summaryElem = create('p', 'personal-note fst-italic m-0 p-3 personal-note text-muted');
                 summaryElem.innerHTML = '<i class="fa-2x fa-comment-lines fa-light fa-pull-left" style="--fa-pull-margin: 1rem;"></i>' + season.notes;
                 self.append(summaryElem);
             }
-    
+            
             if (season.summary) {
                 let titleElem = create('h2', 'title fs-4');
                 titleElem.textContent = 'Summary';
-        
+                
                 let summaryElem = create('p', 'summary');
                 summaryElem.textContent = season.summary;
                 self.append(titleElem, summaryElem);
             }
-    
-    
+            
+            
             $t.find('#quick-show-status').click(function () {
                 $t.prop('Fragment').push({
                     name: 'season-edit-plant',
@@ -952,7 +951,7 @@ Fragment.plant('season-interface', function (params) {
                     }
                 })
             });
-    
+            
             $t.find('#quick-user-status').click(function () {
                 $t.prop('Fragment').push({
                     name: 'season-classifier-plant',
@@ -970,7 +969,7 @@ Fragment.plant('season-interface', function (params) {
 })
 
 Fragment.plant('show-classifier-plant', function (params) {
-
+    
     const show = params.show;
     
     let $t = $(this);
@@ -1084,7 +1083,7 @@ Fragment.plant('season-classifier-plant', function (params) {
                 console.log('changes commit', changes);
                 
                 if (changes === 1) {
-    
+                    
                     console.log('changes 1, go home');
                     Fragment.select('season-info').home();
                     
@@ -1479,7 +1478,6 @@ Fragment.plant('show-poster-manager-plant', function (params) {
         });
     })
     
-
     
     if (undefined !== show.poster) {
         let $removePoster = $t.find('#remove-poster');
@@ -1542,7 +1540,7 @@ function generateInternalCard(type, item, seasonShow, showPoster, numberOfSeason
         cardContent.appendHTML('<h3 class="stack-in-card-title">' + ((item.name || seasonShow.name) + (item.aired ? ' <span class="aired">(' + item.aired.getFullYear() + ')</span>' : '')) + '</h3>')
         
         let moreInfo = create('div', 'season-more-info');
-        moreInfo.appendHTML( (numberOfSeasons > 1 ? ' <span class="season-position">(' + item.position + '/' + numberOfSeasons + ')</span>' : ''))
+        moreInfo.appendHTML((numberOfSeasons > 1 ? ' <span class="season-position">(' + item.position + '/' + numberOfSeasons + ')</span>' : ''))
         cardContent.append(moreInfo);
     } else {
         cardContent.appendHTML('<h3 class="stack-in-card-title">' + item.name + (item.aired ? ' <span class="aired">(' + item.aired.getFullYear() + ')</span>' : '') + '</h3>')
@@ -1553,16 +1551,47 @@ function generateInternalCard(type, item, seasonShow, showPoster, numberOfSeason
 }
 
 
-db.shows.toArray().then(shows => {
-    console.log('shows', shows);
-    
-    let stack = create('div', 'stack');
-    stack.appendHTML('<h2 class="stack-title">Shows in Database</h2><div class="shows-list"><div class="show-list-inner"></div></div>');
-    let container = stack.querySelector('.show-list-inner');
-    shows.forEach(show => {
-        container.append(generateShowCard(show))
-    })
-    
-    $('.showcase').append(stack)
-    
+const $showcase = $('.showcase'),
+    tt = Helper.domFromHTML('<div class="stack"><h2 class="stack-title"></h2><div class="shows-list"><div class="show-list-inner"></div></div></div>'),
+    collections = [
+        ["Unclassified titles", show => !show.userStatus],
+        ["I'm watching", show => show.userStatus === "Watching"],
+        ["I'm waiting", show => show.userStatus === "Pending"],
+        ["I Plan to watch", show => show.userStatus === "Plan to Watch"],
+        ["Completed", show => show.userStatus === "Completed"],
+        ["Dropped shows", show => show.userStatus === "Dropped"],
+    ];
+
+Dexie.liveQuery(() => db.shows.toArray()).subscribe({
+    next: shows => {
+        console.log('shows', shows);
+        
+        
+        $showcase.empty();
+        
+        //
+        // {
+        //     let elem = tt.cloneNode(1),
+        //         titles_container = elem.querySelector('.show-list-inner');
+        //
+        //     elem.querySelector('h2').textContent = "All titles";
+        //     shows.forEach(show => {
+        //         titles_container.append(generateShowCard(show))
+        //     })
+        //     $showcase.append(elem)
+        // }
+        
+        collections.forEach(([name, f]) => {
+            let elem = tt.cloneNode(1),
+                titles_container = elem.querySelector('.show-list-inner');
+            
+            elem.querySelector('h2').textContent = name;
+            shows.filter(f).forEach(show => {
+                titles_container.append(generateShowCard(show))
+            })
+            $showcase.append(elem)
+        });
+        
+        
+    }
 })

@@ -183,7 +183,7 @@ document.addEventListener('smartFetchResponse', function (data) {
 }, false);
 
 // check for Hero addon
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('load', () => {
     setTimeout(function () {
         let waiter = setTimeout(function () {
             alert('hero addon is not found');
@@ -327,6 +327,11 @@ const Helper = (() => {
     };
     
     return {
+        domFromHTML(html) {
+            const template = document.createElement('template');
+            template.innerHTML = html.trim();
+            return template.content.firstChild;
+        },
         formatDate(d) {
             let dt = ("0" + d.getDate()).slice(-2),
                 mt = ("0" + (d.getMonth() + 1)).slice(-2),
