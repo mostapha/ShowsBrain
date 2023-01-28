@@ -801,7 +801,7 @@ Fragment.plant('season-interface', function (params) {
                                         }
                                         
                                         let objectUrl;
-    
+                                        
                                         $imageUrl[0].addEventListener("paste", () => {
                                             console.log('paste');
                                             navigator.clipboard.read().then(items => {
@@ -810,16 +810,16 @@ Fragment.plant('season-interface', function (params) {
                                                 if (imagesItems.length !== 0) {
                                                     let imageType = imagesItems[0].types.find(type => type.startsWith("image/"));
                                                     imagesItems[0].getType(imageType).then(blob => {
-                    
+                                                        
                                                         let imageUrl = URL.createObjectURL(blob)
                                                         objectUrl = imageUrl;
-                    
+                                                        
                                                         $saveBtn.prop('disabled', false);
                                                         $posterImg[0].src = imageUrl
-                    
+                                                        
                                                     })
                                                 } else {
-                                                    alert('available types are: ' + Array.from(new Set(items.flatMap(e => e.types))).join(', ') );
+                                                    alert('available types are: ' + Array.from(new Set(items.flatMap(e => e.types))).join(', '));
                                                 }
                                             }).catch((err) => {
                                                 console.error(err);
@@ -1495,13 +1495,13 @@ Fragment.plant('show-poster-manager-plant', function (params) {
                     
                     let imageUrl = URL.createObjectURL(blob)
                     objectUrl = imageUrl;
-    
+                    
                     $saveBtn.prop('disabled', false);
                     $posterImg[0].src = imageUrl
                     
                 })
             } else {
-                alert('available types are: ' + Array.from(new Set(items.flatMap(e => e.types))).join(', ') );
+                alert('available types are: ' + Array.from(new Set(items.flatMap(e => e.types))).join(', '));
             }
         }).catch((err) => {
             console.error(err);
@@ -1719,4 +1719,57 @@ $('#toggle-drawer').click(function () {
 $drawerDim.click(function () {
     $drawerContainer.removeClass('open');
     drawerOpen = false;
+})
+
+let importDBinput = document.getElementById("file-selector");
+
+importDBinput.addEventListener("change", function () {
+    let file = importDBinput.files[0];
+    let reader = new FileReader();
+    reader.onload = function () {
+        let blob = new Blob([reader.result], {type: file.type});
+        // Do something with the blob here
+        console.log('blob', blob);
+        
+        Dexie.import(blob, {
+            acceptNameDiff: false,
+            acceptChangedPrimaryKey: false,
+            acceptMissingTables: false,
+            overwriteValues: true,
+        }).then(e => {
+            alert('imported successfully');
+        }).catch(e => {
+            console.error(e);
+        })
+        
+    };
+    reader.readAsArrayBuffer(file);
+});
+
+$('.drawer button').click(function () {
+    switch ($(this).data('action')) {
+        case 'import-database': {
+            
+            importDBinput.click();
+            
+            break;
+        }
+        case 'export-database': {
+            console.log('export-database');
+            
+            db.export().then(blob => {
+                let date = new Date(),
+                    daySecond = ((date.getUTCHours() * 3600) + (date.getUTCMinutes() * 60) + date.getUTCSeconds() + "").padStart(5, 0);
+                
+                let fileName = "ShowsBrain-" + date.toISOString().substring(0, 10) + ";" + daySecond;
+                download(blob, fileName + ".json", "application/json");
+            });
+            
+            break;
+        }
+        case 'open-google': {
+            window.open("https://www.google.com/");
+            break;
+        }
+    }
 })

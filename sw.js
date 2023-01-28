@@ -29,6 +29,8 @@ let appShellFiles = [
     "/ShowsBrain/js/init-sw.js",
     "/ShowsBrain/libraries/jQuery/jquery.js",
     "/ShowsBrain/libraries/Dexie.js-3.2.2/dist/dexie.js",
+    "/ShowsBrain/libraries/Dexie.js-3.2.2/dist/dexie-export-import.js",
+    "/ShowsBrain/libraries/downloadjs-1.4.8/download.min.js",
     "/ShowsBrain/libraries/pako/2.0.4/pako.min.js",
     "/ShowsBrain/libraries/bootstrap/js/bootstrap.bundle.js",
     "/ShowsBrain/js/helper.js",

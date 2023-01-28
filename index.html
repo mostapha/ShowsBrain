@@ -33,36 +33,36 @@
     <small class="fragment-title navbar-text text-nowrap text-truncate w-100">Brain Memory</small>
     <div class="nav-actions d-flex">
         <button class="btn" data-bs-title="search shows" id='nav-search'><i class="fa-regular fa-search"></i></button>
-        <button class="btn" data-bs-title="Open Google" id="open-google"><i class="fa-brands fa-google"></i></button>
     </div>
 </nav>
 
 <div class="showcase">
 
 </div>
+<input type="file" id="file-selector" style="display: none"/>
 
 <div class="drawer-container">
     <div class="drawer">
         <div class="list-group">
             <button class="align-items-center border-0 d-flex list-group-item list-group-item-action py-3"
-                    data-action="edit-show">
+                    data-action="export-database">
                 <i class="fa-duotone fa-inbox-out fa-fw fa-lg"
                    style="/* --fa-primary-color: #5a19d1; *//* --fa-secondary-color: #e5e5e5; *//* --fa-secondary-opacity: 1; */"></i>
-                <span class="ms-3 fw-semibold">Export Database</span>
+                <span class="ms-3">Export Database</span>
             </button>
 
 
             <button class="align-items-center border-0 d-flex list-group-item list-group-item-action py-3"
-                    data-action="edit-show">
+                    data-action="import-database">
                 <i class="fa-duotone fa-inbox-in fa-fw fa-lg"
                    style="/* --fa-primary-color: #5a19d1; *//* --fa-secondary-color: #e5e5e5; *//* --fa-secondary-opacity: 1; */"></i>
-                <span class="ms-3 fw-semibold">Imprt Database</span>
+                <span class="ms-3">Import Database</span>
             </button>
             <button class="align-items-center border-0 d-flex list-group-item py-3 list-group-item-action"
-                    data-action="edit-show">
+                    data-action="open-google">
                 <i class="fa-brands fa-google fa-fw fa-lg"
                    style="--fa-primary-color: #5a19d1; --fa-secondary-color: #e5e5e5; --fa-secondary-opacity: 1;"></i>
-                <span class="ms-3 fw-semibold">Open Google</span>
+                <span class="ms-3">Open Google</span>
             </button>
         </div>
     </div>
@@ -482,6 +482,8 @@
 
 <script src="libraries/jQuery/jquery.js"></script>
 <script src="libraries/Dexie.js-3.2.2/dist/dexie.js"></script>
+<script src="libraries/Dexie.js-3.2.2/dist/dexie-export-import.js" async defer></script>
+<script src="libraries/downloadjs-1.4.8/download.min.js" async defer></script>
 <script src="libraries/pako/2.0.4/pako.min.js"></script>
 <script src="libraries/bootstrap/js/bootstrap.bundle.js"></script>
 <script src="js/helper.js"></script>
