@@ -747,21 +747,21 @@ Fragment.plant('season-interface', function (params) {
                                     Fragment.select('season-info').push(function () {
                                         let self = this,
                                             $t = $(self);
-    
+                                        
                                         self.registerNavAction([{
                                             name: 'Apply as show poster',
                                             id: 'make-as-show-poster',
                                             icon: 'fa-regular fa-arrow-up-from-bracket',
-                                            action: function(){
-                                                if(season.poster){
+                                            action: function () {
+                                                if (season.poster) {
                                                     console.log('seasons id', season.showId);
                                                     console.log('season poster', season.poster);
                                                     console.log('show poster', show.poster)
-                                                    if(confirm('apply this season poster as the show poster? you can\'t undo this change')){
+                                                    if (confirm('apply this season poster as the show poster? you can\'t undo this change')) {
                                                         db.shows.where({id: season.showId}).modify(s => {
                                                             s.poster = season.poster
                                                         }).then(n => {
-                                                            if(n === 1) {
+                                                            if (n === 1) {
                                                                 alert('Applied successfully');
                                                             }
                                                         })
@@ -771,7 +771,7 @@ Fragment.plant('season-interface', function (params) {
                                                 }
                                             },
                                             disabled: true
-                                        },{
+                                        }, {
                                             name: 'search Google for poster',
                                             icon: 'fa-regular fa-g',
                                             action: function () {
@@ -790,7 +790,7 @@ Fragment.plant('season-interface', function (params) {
                                         $posterImg.attr('data-poster', 'season-id-' + season.id);
                                         
                                         if (season.poster) {
-    
+                                            
                                             self.previousElementSibling.querySelector('#make-as-show-poster').disabled = false
                                             
                                             let objUrl = inflateAndGetObject(season.poster)
@@ -934,8 +934,8 @@ Fragment.plant('season-interface', function (params) {
                 }
                 $posterImg[0].src = objUrl;
                 
-                if(!season.poster){
-                    $posterImg[0].insertAdjacentHTML('beforebegin','<span class="ribbon" style="background: #520dc2;box-shadow: 0 0 0 30px #520dc2;color: white;">show poster</span>')
+                if (!season.poster) {
+                    $posterImg[0].insertAdjacentHTML('beforebegin', '<span class="ribbon" style="background: #520dc2;box-shadow: 0 0 0 30px #520dc2;color: white;">show poster</span>')
                 }
             }
             
@@ -1443,6 +1443,7 @@ Fragment.plant('show-poster-manager-plant', function (params) {
     let $imageUrl = $t.find('#set-image-url'),
         $posterImg = $t.find('.poster img');
     
+    
     let $getImage = $t.find('#get-image'),
         $saveBtn = $t.find('#save-image');
     
@@ -1457,6 +1458,27 @@ Fragment.plant('show-poster-manager-plant', function (params) {
     }
     
     let objectUrl;
+    $imageUrl[0].addEventListener("paste", event => {
+        navigator.clipboard.read().then(items => {
+            console.log('items', items);
+            let imagesItems = items.filter(e => e.types.includes("image/png"));
+            if (imagesItems.length !== 0) {
+                imagesItems[0].getType('image/png').then(blob => {
+                    
+                    let imageUrl = URL.createObjectURL(blob)
+                    objectUrl = imageUrl;
+
+                    $saveBtn.prop('disabled', false);
+                    $posterImg[0].src = imageUrl
+                    
+                })
+            }
+        }).catch((err) => {
+            console.error(err);
+            alert(err.message);
+        });
+    });
+    
     $getImage.click(function () {
         let self = this,
             $self = $(self);
@@ -1475,20 +1497,18 @@ Fragment.plant('show-poster-manager-plant', function (params) {
                 objectUrl = null;
             }
             
+            
             Helper.getImage(val, true).then(blob => {
                 // save it, we will use it when we confirm adding image
                 
                 let imageUrl = URL.createObjectURL(blob)
-                
                 objectUrl = imageUrl;
-                
                 console.log('blob', blob);
                 console.log('objectUrl', imageUrl);
-                
                 $saveBtn.prop('disabled', false);
                 $self.text('Get').prop('disabled', false);
-                
                 $posterImg[0].src = imageUrl
+                
             }).catch(n => {
                 console.error(n);
                 $posterImg[0].attr('src', 'images/pixel.png');
@@ -1653,8 +1673,8 @@ let $drawer = $('.drawer'),
     $drawerDim = $('.drawer-dim'),
     drawerOpen = false;
 
-$('#toggle-drawer').click(function(){
-    if(drawerOpen){
+$('#toggle-drawer').click(function () {
+    if (drawerOpen) {
         $drawerContainer.removeClass('open');
         drawerOpen = false;
     } else {
