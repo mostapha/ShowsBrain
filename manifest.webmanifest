@@ -1,6 +1,6 @@
 {
   "description": "Shows random fox pictures. Hey, at least it isn't cats.",
-  "display": "fullscreen",
+  "display": "standalone",
   "icons": [
     {
       "src": "images/brain-192.png",
