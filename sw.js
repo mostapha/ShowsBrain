@@ -1,6 +1,5 @@
 
-
-const cacheName = "brain-cache-v7";
+const cacheName = "brain-cache-v8";
 
 let appShellFiles = [
     // html
@@ -56,24 +55,6 @@ self.addEventListener("install", (e) => {
     );
 });
 
-const reg = /^(?:(?:(?<Day>(?:3[0-1]|[1-2][0-9]|0?[1-9]))(?<seperator>[\s/-]))?(?<Month>(?:(?:1[0-2]|0?[1-9])|jan(?:uary|\.)?|feb(?:ruary|\.)?|mar(?:ch|\.)?|apr(?:il|\.)?|may.?|june?\.?|july?\.?|Aug(?:ust)?\.?|Sep(?:t|tember)?\.?|Oct(?:ober)?\.?|nov(?:ember)?\.?|dec(?:ember)?\.?))\k<seperator>)?(?<Year>\d{4})$/
-
-// self.addEventListener("fetch", (e) => {
-//     e.respondWith(
-//         (async () => {
-//             const r = await caches.match(e.request);
-//             console.log(`[Service Worker] Fetching resource: ${e.request.url}`);
-//             if (r) {
-//                 e.preventDefault();
-//                 return r;
-//             }
-//             console.error('item not found in cache', e.request.url);
-//
-//             return await fetch(e.request) ;
-//         })()
-//     );
-// });
-
 // Establish a cache name
 self.addEventListener('fetch', (event) => {
     event.respondWith(caches.open(cacheName).then((cache) => {
@@ -90,7 +71,6 @@ self.addEventListener('fetch', (event) => {
     }));
 });
 
-
 // used to clear out the old cache we don't need anymore
 self.addEventListener("activate", (e) => {
     console.log('[Service Worker] Activate')
@@ -106,10 +86,7 @@ self.addEventListener("activate", (e) => {
             );
         })
     );
-    // e.waitUntil(clients.claim());
 });
-
-
 
 
 self.onmessage = async (event) => {
@@ -132,4 +109,3 @@ self.onmessage = async (event) => {
         
     }
 };
-
