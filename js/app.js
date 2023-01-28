@@ -1612,7 +1612,7 @@ function generateShowCard(show) {
 }
 
 function generateInternalCard(type, item, seasonShow, showPoster, numberOfSeasons) {
-    let showCard = create('div', (type === 'season' ? 'season-card ' : 'show-card ') + 'stacks-in-card' + (item.status === "upcoming" ? ' upcoming' : ""));
+    let showCard = create('div', (type === 'season' ? 'season-card ' : 'show-card ') + 'stacks-in-card' + (item.status === "Upcoming" ? ' upcoming' : ""));
     
     if (type === 'season') {
         showCard.dataset.seasonId = item.id;
@@ -1621,7 +1621,7 @@ function generateInternalCard(type, item, seasonShow, showPoster, numberOfSeason
     }
     
     if (type === "season") {
-        showCard.appendHTML('<div class="global-poster poster">' + (item.status === "upcoming" ? '<span class="ribbon">Upcoming</span>' : "") + '<img draggable="false" alt="" class="posterImage" loading="lazy" data-poster="' + ('season-id-' + item.id) + '" src="' + (item.poster ? inflateAndGetObject(item.poster) : (showPoster ? showPoster : "images/pixel.png")) + '"/></div>');
+        showCard.appendHTML('<div class="global-poster poster">' + (item.status === "Upcoming" ? '<span class="ribbon">Upcoming</span>' : "") + '<img draggable="false" alt="" class="posterImage" loading="lazy" data-poster="' + ('season-id-' + item.id) + '" src="' + (item.poster ? inflateAndGetObject(item.poster) : (showPoster ? showPoster : "images/pixel.png")) + '"/></div>');
     } else {
         showCard.appendHTML('<div class="global-poster poster"><img draggable="false" alt="" class="posterImage" loading="lazy" data-poster="show-id-' + item.id + '" src="' + (item.poster ? inflateAndGetObject(item.poster) : "images/pixel.png") + '"/></div>');
     }
