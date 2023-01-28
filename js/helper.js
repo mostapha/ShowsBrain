@@ -83,7 +83,7 @@ String.prototype.toTitleCase = function () {
             }
             
             /* Capitalize the first letter */
-            return current.replace(alphanumericPattern, function (match) {
+            return current.trim().replace(alphanumericPattern, function (match) {
                 return match.toUpperCase()
             })
         })
