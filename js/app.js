@@ -747,6 +747,37 @@ Fragment.plant('season-interface', function (params) {
                                     Fragment.select('season-info').push(function () {
                                         let self = this,
                                             $t = $(self);
+    
+                                        self.registerNavAction([{
+                                            name: 'Apply as show poster',
+                                            id: 'make-as-show-poster',
+                                            icon: 'fa-regular fa-arrow-up-from-bracket',
+                                            action: function(){
+                                                if(season.poster){
+                                                    console.log('seasons id', season.showId);
+                                                    console.log('season poster', season.poster);
+                                                    console.log('show poster', show.poster)
+                                                    if(confirm('apply this season poster as the show poster? you can\'t undo this change')){
+                                                        db.shows.where({id: season.showId}).modify(s => {
+                                                            s.poster = season.poster
+                                                        }).then(n => {
+                                                            if(n === 1) {
+                                                                alert('Applied successfully');
+                                                            }
+                                                        })
+                                                    }
+                                                } else {
+                                                    alert('poster is not found');
+                                                }
+                                            },
+                                            disabled: true
+                                        },{
+                                            name: 'search Google for poster',
+                                            icon: 'fa-regular fa-g',
+                                            action: function () {
+                                                window.open("https://www.google.com/search?hl=en&tbm=isch&q=" + encodeURIComponent(show.name + ' ' + (season.name ? season.name : "S" + season.position) + ' official poster'));
+                                            }
+                                        }]);
                                         
                                         $t.html(templates['upload-image'].cloneNode(1));
                                         
@@ -759,6 +790,9 @@ Fragment.plant('season-interface', function (params) {
                                         $posterImg.attr('data-poster', 'season-id-' + season.id);
                                         
                                         if (season.poster) {
+    
+                                            self.previousElementSibling.querySelector('#make-as-show-poster').disabled = false
+                                            
                                             let objUrl = inflateAndGetObject(season.poster)
                                             $posterImg[0].onload = function () {
                                                 URL.revokeObjectURL(objUrl);
@@ -830,7 +864,7 @@ Fragment.plant('season-interface', function (params) {
                                                             URL.revokeObjectURL(objectUrl);
                                                             console.log('saved');
                                                             
-                                                            $t.prop('Fragment').back();
+                                                            $t.prop('Fragment').home();
                                                         } else {
                                                             alert('unexpected reach');
                                                         }
@@ -849,6 +883,7 @@ Fragment.plant('season-interface', function (params) {
                                                         delete n.poster;
                                                     }).then(n => {
                                                         console.log('poster removed', n);
+                                                        $posterImg[0].src = "images/pixel.png"
                                                     })
                                                 }
                                             });
@@ -898,6 +933,10 @@ Fragment.plant('season-interface', function (params) {
                     // URL.revokeObjectURL(objUrl);
                 }
                 $posterImg[0].src = objUrl;
+                
+                if(!season.poster){
+                    $posterImg[0].insertAdjacentHTML('beforebegin','<span class="ribbon" style="background: #520dc2;box-shadow: 0 0 0 30px #520dc2;color: white;">show poster</span>')
+                }
             }
             
             
@@ -1307,6 +1346,8 @@ Fragment.plant("season-edit-plant", function (params) {
         seasonAired = $t.find('#edit-season-aired'),
         seasonSummary = $t.find('#edit-season-summary'),
         seasonEpisodesCount = $t.find('#edit-season-episodes-count'),
+        seasonEpisodesRangeFrom = $t.find('#episodesRangeFrom'),
+        seasonEpisodesRangeTo = $t.find('#episodesRangeTo'),
         seasonLastWatchedEpisode = $t.find('#edit-season-last-watched-episode'),
         seasonStatus = $t.find('#edit-season-status');
     
@@ -1314,6 +1355,8 @@ Fragment.plant("season-edit-plant", function (params) {
     seasonAired.val(season.aired ? Helper.formatDate(season.aired) : "");
     seasonSummary.val(season.summary ?? "");
     seasonEpisodesCount.val(season.episodesCount ?? "");
+    seasonEpisodesRangeFrom.val(season.episodesRangeFrom ?? "");
+    seasonEpisodesRangeTo.val(season.episodesRangeTo ?? "");
     seasonLastWatchedEpisode.val(season.lastWatchedEpisode ?? "");
     seasonStatus.val(season.status ?? "");
     
@@ -1325,6 +1368,8 @@ Fragment.plant("season-edit-plant", function (params) {
             aired: seasonAired.val() === "" ? (season.aired ? 0 : false) : parseDate(seasonAired.val()).getTime() === season.aired?.getTime() ? false : parseDate(seasonAired.val()),
             summary: seasonSummary.val().trim() === "" ? (season.summary ? 0 : false) : (seasonSummary.val() === season.summary ? false : seasonSummary.val().trim()),
             episodesCount: seasonEpisodesCount.val() === "" ? (season.episodesCount !== undefined ? 0 : false) : (parseInt(seasonEpisodesCount.val()) === season.episodesCount ? false : parseInt(seasonEpisodesCount.val())),
+            episodesRangeFrom: seasonEpisodesRangeFrom.val() === "" ? (season.episodesRangeFrom !== undefined ? 0 : false) : (parseInt(seasonEpisodesRangeFrom.val()) === season.episodesRangeFrom ? false : parseInt(seasonEpisodesRangeFrom.val())),
+            episodesRangeTo: seasonEpisodesRangeTo.val() === "" ? (season.episodesRangeTo !== undefined ? 0 : false) : (parseInt(seasonEpisodesRangeTo.val()) === season.episodesRangeTo ? false : parseInt(seasonEpisodesRangeTo.val())),
             lastWatchedEpisode: seasonLastWatchedEpisode.val() === "" ? (season.lastWatchedEpisode !== undefined ? 0 : false) : (parseInt(seasonLastWatchedEpisode.val()) === season.lastWatchedEpisode ? false : parseInt(seasonLastWatchedEpisode.val())),
             status: seasonStatus.val() === "" ? (season.status ? 0 : false) : (seasonStatus.val() === season.status ? false : seasonStatus.val())
         }
@@ -1380,11 +1425,18 @@ Fragment.plant("season-edit-plant", function (params) {
 Fragment.plant('show-poster-manager-plant', function (params) {
     const show = params.show;
     
-    
     let self = this,
         $t = $(self);
     
     self.setTitle(show.name + "'s poster");
+    self.registerNavAction([{
+        name: 'search Google for poster',
+        icon: 'fa-regular fa-g',
+        action: function () {
+            window.open("https://www.google.com/search?hl=en&tbm=isch&q=" + encodeURIComponent(show.name + " official poster"));
+        }
+    }]);
+    
     
     $t.html(templates['upload-image'].cloneNode(1));
     
@@ -1458,13 +1510,6 @@ Fragment.plant('show-poster-manager-plant', function (params) {
                     show.poster = pako.deflate(arrayBuffer);
                 }).then(n => {
                     if (n === 1) {
-                        // document.querySelectorAll('img[data-poster="show-id-' + show.id + '"]').forEach(n => {
-                        //     let obj = URL.createObjectURL(blob);
-                        //     n.onload = function () {
-                        //         URL.revokeObjectURL(obj);
-                        //     }
-                        //     n.src = obj
-                        // });
                         URL.revokeObjectURL(objectUrl);
                         console.log('saved');
                         $t.prop('Fragment').home();
@@ -1476,7 +1521,6 @@ Fragment.plant('show-poster-manager-plant', function (params) {
         });
     })
     
-    
     if (undefined !== show.poster) {
         let $removePoster = $t.find('#remove-poster');
         $removePoster.prop('disabled', false);
@@ -1486,11 +1530,11 @@ Fragment.plant('show-poster-manager-plant', function (params) {
                     delete n.poster;
                 }).then(n => {
                     console.log('poster removed', n);
+                    $posterImg[0].src = "images/pixel.png"
                 })
             }
         });
     }
-    
     
 })
 

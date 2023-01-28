@@ -266,8 +266,8 @@ const Helper = (() => {
         }
         
         return new Promise((resolve, reject) => {
-            const MAX_WIDTH = 270;
-            const MAX_HEIGHT = 387;
+            const MAX_WIDTH = 210;
+            const MAX_HEIGHT = 301;
             const MIME_TYPE = "image/jpeg";
             const QUALITY = 0.9;
             

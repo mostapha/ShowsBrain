@@ -80,10 +80,16 @@ const Fragment = (() => {
                         innerHTML: '<i class="' + navAction.icon + '"></i>',
                         onclick: () => navAction.action.call(template.lastElementChild)
                     });
+                    
+                    if(navAction.id){
+                        btn.id = navAction.id
+                    }
                     if (navAction.name) {
                         btn.dataset.bsTitle = navAction.name
                     }
-                    
+                    if(navAction.disabled){
+                        btn.disabled = true
+                    }
                     navActionsElem.insertAdjacentElement('beforeend', btn);
                     
                     let tooltip,

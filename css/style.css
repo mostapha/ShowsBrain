@@ -202,6 +202,9 @@ nav.red500 {
     color: #fff !important;
 }
 
+nav button {
+    border-color: #0000 !important;
+}
 
 /* this one should only select the titles that are in the  show interface */
 #show-interface h2.title, #season-interface h2.title {

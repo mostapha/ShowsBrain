@@ -27,13 +27,13 @@
 
 <body>
 
-<nav id='top-nav' class="flex-nowrap gap-2 navbar px-2 red500">
-    <button id='toggle-drawer' class="btn fw-bold text-black" data-bs-title="menu" type="button">
+<nav class="flex-nowrap gap-2 navbar px-2 red500" id='top-nav'>
+    <button class="btn fw-bold text-black" data-bs-title="menu" id='toggle-drawer' type="button">
         <i class="fa-solid fa-bars"></i>
     </button>
     <small class="fragment-title navbar-text text-nowrap text-truncate w-100">Brain Memory</small>
     <div class="nav-actions d-flex">
-        <button id='nav-search' class="btn" data-bs-title="search shows"><i class="fa-regular fa-search"></i></button>
+        <button class="btn" data-bs-title="search shows" id='nav-search'><i class="fa-regular fa-search"></i></button>
     </div>
 </nav>
 
@@ -198,6 +198,11 @@
         </div>
 
         <div class="mb-3">
+            <label class="form-label" for="edit-show-status">Show status</label>
+            <select class="form-select" data-init-select="show-status" id='edit-show-status'></select>
+        </div>
+
+        <div class="mb-3">
             <label class="form-label" for="edit-show-summary">Summary</label>
             <textarea class="form-control" id="edit-show-summary" rows="3"></textarea>
         </div>
@@ -205,11 +210,6 @@
         <div class="mb-3">
             <label class="form-label" for="edit-show-seasons-count">Number of seasons</label>
             <input class="form-control" id="edit-show-seasons-count" min="1" required type="number">
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label" for="edit-show-status">Show status</label>
-            <select class="form-select" data-init-select="show-status" id='edit-show-status'></select>
         </div>
 
         <div class="mb-3">
@@ -266,8 +266,21 @@
         </div>
 
         <div class="mb-3">
+            <label class="form-label" for="episodesRangeFrom">Episodes range</label>
+            <div class="gx-3 row">
+                <div class="col">
+                    <input class="form-control" id="episodesRangeFrom" placeholder="from.." type="number">
+                </div>
+                <div class="col">
+                    <input class="form-control" id="episodesRangeTo" placeholder="to.." type="number">
+                </div>
+            </div>
+            <div class="form-text">Leave empty if it's not applied</div>
+        </div>
+
+        <div class="mb-3">
             <label class="form-label" for="edit-season-last-watched-episode">Last watched Episode</label>
-            <input class="form-control" id="edit-season-last-watched-episode" type="number">
+            <input class="form-control" id="edit-season-last-watched-episode" type="number" placeholder="episode number..">
             <div class="form-text">If you didn't watch any episode keep it empty, do not type 0 in the box</div>
         </div>
 
