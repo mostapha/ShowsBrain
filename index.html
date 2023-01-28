@@ -33,6 +33,7 @@
     <small class="fragment-title navbar-text text-nowrap text-truncate w-100">Brain Memory</small>
     <div class="nav-actions d-flex">
         <button class="btn" data-bs-title="search shows" id='nav-search'><i class="fa-regular fa-search"></i></button>
+        <button class="btn" data-bs-title="Open Google" id="open-google"><i class="fa-brands fa-google"></i></button>
     </div>
 </nav>
 
@@ -42,7 +43,28 @@
 
 <div class="drawer-container">
     <div class="drawer">
-        <div>some content here</div>
+        <div class="list-group">
+            <button class="align-items-center border-0 d-flex list-group-item list-group-item-action py-3"
+                    data-action="edit-show">
+                <i class="fa-duotone fa-inbox-out fa-fw fa-lg"
+                   style="/* --fa-primary-color: #5a19d1; *//* --fa-secondary-color: #e5e5e5; *//* --fa-secondary-opacity: 1; */"></i>
+                <span class="ms-3 fw-semibold">Export Database</span>
+            </button>
+
+
+            <button class="align-items-center border-0 d-flex list-group-item list-group-item-action py-3"
+                    data-action="edit-show">
+                <i class="fa-duotone fa-inbox-in fa-fw fa-lg"
+                   style="/* --fa-primary-color: #5a19d1; *//* --fa-secondary-color: #e5e5e5; *//* --fa-secondary-opacity: 1; */"></i>
+                <span class="ms-3 fw-semibold">Imprt Database</span>
+            </button>
+            <button class="align-items-center border-0 d-flex list-group-item py-3 list-group-item-action"
+                    data-action="edit-show">
+                <i class="fa-brands fa-google fa-fw fa-lg"
+                   style="--fa-primary-color: #5a19d1; --fa-secondary-color: #e5e5e5; --fa-secondary-opacity: 1;"></i>
+                <span class="ms-3 fw-semibold">Open Google</span>
+            </button>
+        </div>
     </div>
     <div class="drawer-dim"></div>
 </div>
@@ -287,7 +309,8 @@
 
         <div class="mb-3">
             <label class="form-label" for="edit-season-last-watched-episode">Last watched Episode</label>
-            <input class="form-control" id="edit-season-last-watched-episode" placeholder="episode number.." type="number">
+            <input class="form-control" id="edit-season-last-watched-episode" placeholder="episode number.."
+                   type="number">
             <div class="form-text">If you didn't watch any episode keep it empty, do not type 0 in the box</div>
         </div>
 

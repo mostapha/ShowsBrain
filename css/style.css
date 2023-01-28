@@ -421,22 +421,18 @@ nav button {
     padding: 1em;
 }
 
-
-
-
 .drawer {
     width: 400px;
     max-width: calc(100% - 46px);
-    background: white;
+    background: #fff;
     position: fixed;
     height: 100vh;
     top: 0;
     left: 0;
     z-index: 9999;
-    padding: 20px;
+    padding: 50px 0;
     transform: translate(-100%);
     transition: transform 0.3s ease, visibility 0.3s linear;
-    /*noinspection CssInvalidPropertyValue*/
     overflow: overlay;
     visibility: hidden;
 }
