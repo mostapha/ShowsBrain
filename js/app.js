@@ -1691,10 +1691,13 @@ const observingFunction = {
 }
 let subscription = observable.subscribe(observingFunction)
 
+const $body = $('body');
 $showcase.on('active', function () {
     subscription = observable.subscribe(observingFunction);
+    $body.removeClass('no-scroll');
 }).on('inactive', function () {
-    subscription.unsubscribe()
+    subscription.unsubscribe();
+    $body.addClass('no-scroll');
 });
 
 
