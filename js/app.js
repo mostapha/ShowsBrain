@@ -1460,18 +1460,20 @@ Fragment.plant('show-poster-manager-plant', function (params) {
     let objectUrl;
     $imageUrl[0].addEventListener("paste", event => {
         navigator.clipboard.read().then(items => {
-            console.log('items', items);
-            let imagesItems = items.filter(e => e.types.includes("image/png"));
+            let imagesItems = items.filter(e => e.types.some(type => type.startsWith("image/")));
             if (imagesItems.length !== 0) {
-                imagesItems[0].getType('image/png').then(blob => {
+                let imageType = imagesItems[0].types.find(type => type.startsWith("image/"));
+                imagesItems[0].getType(imageType).then(blob => {
                     
                     let imageUrl = URL.createObjectURL(blob)
                     objectUrl = imageUrl;
-
+    
                     $saveBtn.prop('disabled', false);
                     $posterImg[0].src = imageUrl
                     
                 })
+            } else {
+                alert('available types are: ' + Array.from(new Set(items.flatMap(e => e.types))).join(', ') );
             }
         }).catch((err) => {
             console.error(err);
