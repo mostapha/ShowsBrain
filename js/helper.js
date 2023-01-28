@@ -182,21 +182,6 @@ document.addEventListener('smartFetchResponse', function (data) {
     smartFetchCallbacks[data.detail.callback](data.detail.response)
 }, false);
 
-// check for Hero addon
-window.addEventListener('load', () => {
-    setTimeout(function () {
-        let waiter = setTimeout(function () {
-            alert('hero addon is not found');
-        }, 200);
-        let checkTestHero = function () {
-            clearInterval(waiter);
-            document.removeEventListener('test_hero_succeed', checkTestHero);
-        }
-        document.addEventListener('test_hero_succeed', checkTestHero);
-        document.dispatchEvent(new CustomEvent("test_hero"));
-    }, 200)
-});
-
 const templateContent = document.querySelector('#template').content
 const selectOptions = {
     "titles-types": ["TV series", "TV Mini Series", "Movie", "Anime"],

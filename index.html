@@ -76,7 +76,8 @@
         <div class="mb-3">
             <label class="form-label" for="search-shows">Search shows</label>
             <div class="input-group">
-                <input class="form-control" id="search-shows" placeholder="Search..." required
+                <input autocomplete="off" class="form-control" id="search-shows" placeholder="Search..."
+                       required
                        type="text">
                 <button class="btn btn-outline-secondary reset-selected-show" disabled type="button">Reset</button>
             </div>
@@ -107,7 +108,8 @@
     <form class="row" id="add-show-screen">
         <div class="mb-3">
             <label class="form-label" for="new-show-name">Name</label>
-            <input class="form-control" id="new-show-name"
+            <input autocomplete="off" class="form-control"
+                   id="new-show-name"
                    onblur="this.value=this.value.toTitleCase()"
                    pattern="(.|\s)*\S(.|\s)*"
                    required="required" type="text">
@@ -115,7 +117,8 @@
         </div>
         <div class="mb-3">
             <label class="form-label" for="new-show-air-date">Air date</label>
-            <input class="form-control"
+            <input autocomplete="off"
+                   class="form-control"
                    id="new-show-air-date"
                    onblur="this.value === '' || validDateFormat.test(this.value) ? (this.setCustomValidity(''), this.classList.remove('is-invalid')) : (this.setCustomValidity('invalid date format'), this.classList.add('is-invalid'))"
                    type="text">
@@ -177,7 +180,8 @@
 
         <div class="mb-3">
             <label class="form-label" for="edit-show-name">Show name</label>
-            <input class="form-control" id="edit-show-name" onblur="this.value=this.value.toTitleCase()"
+            <input autocomplete="off" class="form-control" id="edit-show-name"
+                   onblur="this.value=this.value.toTitleCase()"
                    placeholder="Game of Thrones"
                    required
                    type="text">
@@ -189,7 +193,8 @@
         </div>
         <div class="mb-3">
             <label class="form-label" for="edit-show-aired">Air date</label>
-            <input class="form-control"
+            <input autocomplete="off"
+                   class="form-control"
                    id="edit-show-aired"
                    onblur="this.value === '' || validDateFormat.test(this.value) ? (this.setCustomValidity(''), this.classList.remove('is-invalid')) : (this.setCustomValidity('invalid date format'), this.classList.add('is-invalid'))"
                    type="text">
@@ -218,7 +223,8 @@
 
         <div class="mb-3">
             <label class="form-label" for="edit-show-imdb-id">IMDb id</label>
-            <input class="form-control"
+            <input autocomplete="off"
+                   class="form-control"
                    id="edit-show-imdb-id"
                    onblur="this.checkValidity() ? this.classList.remove('is-invalid') : this.classList.add('is-invalid')"
                    pattern="^tt\d+$" type="text">
@@ -239,7 +245,8 @@
 
         <div class="mb-3">
             <label class="form-label" for="edit-season-name">Unique name</label>
-            <input class="form-control"
+            <input autocomplete="off"
+                   class="form-control"
                    id="edit-season-name"
                    onblur="this.value=this.value.toTitleCase()" type="text">
             <div class="form-text">Only if it has a unique name, leave it empty if it does not</div>
@@ -247,7 +254,8 @@
 
         <div class="mb-3">
             <label class="form-label" for="edit-season-aired">Air date</label>
-            <input class="form-control"
+            <input autocomplete="off"
+                   class="form-control"
                    id="edit-season-aired"
                    onblur="this.value === '' || validDateFormat.test(this.value) ? (this.setCustomValidity(''), this.classList.remove('is-invalid')) : (this.setCustomValidity('invalid date format'), this.classList.add('is-invalid'))"
                    type="text">
@@ -279,7 +287,7 @@
 
         <div class="mb-3">
             <label class="form-label" for="edit-season-last-watched-episode">Last watched Episode</label>
-            <input class="form-control" id="edit-season-last-watched-episode" type="number" placeholder="episode number..">
+            <input class="form-control" id="edit-season-last-watched-episode" placeholder="episode number.." type="number">
             <div class="form-text">If you didn't watch any episode keep it empty, do not type 0 in the box</div>
         </div>
 

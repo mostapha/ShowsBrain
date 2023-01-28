@@ -775,7 +775,7 @@ Fragment.plant('season-interface', function (params) {
                                             name: 'search Google for poster',
                                             icon: 'fa-regular fa-g',
                                             action: function () {
-                                                window.open("https://www.google.com/search?hl=en&tbm=isch&q=" + encodeURIComponent(show.name + ' ' + (season.name ? season.name : "S" + season.position) + ' official poster'));
+                                                window.open("https://www.google.com/search?hl=en&tbm=isch&q=" + encodeURIComponent(show.name + ' ' + (season.name ? season.name : "S" + season.position) + (season.aired ? " (" + season.aired.getFullYear() + ")" : "") + ' official poster'));
                                             }
                                         }]);
                                         
@@ -801,6 +801,32 @@ Fragment.plant('season-interface', function (params) {
                                         }
                                         
                                         let objectUrl;
+    
+                                        $imageUrl[0].addEventListener("paste", () => {
+                                            console.log('paste');
+                                            navigator.clipboard.read().then(items => {
+                                                let imagesItems = items.filter(e => e.types.some(type => type.startsWith("image/")));
+                                                console.log('imagesItems', imagesItems);
+                                                if (imagesItems.length !== 0) {
+                                                    let imageType = imagesItems[0].types.find(type => type.startsWith("image/"));
+                                                    imagesItems[0].getType(imageType).then(blob => {
+                    
+                                                        let imageUrl = URL.createObjectURL(blob)
+                                                        objectUrl = imageUrl;
+                    
+                                                        $saveBtn.prop('disabled', false);
+                                                        $posterImg[0].src = imageUrl
+                    
+                                                    })
+                                                } else {
+                                                    alert('available types are: ' + Array.from(new Set(items.flatMap(e => e.types))).join(', ') );
+                                                }
+                                            }).catch((err) => {
+                                                console.error(err);
+                                                alert(err.message);
+                                            });
+                                        });
+                                        
                                         $getImage.click(function () {
                                             let self = this,
                                                 $self = $(self);
@@ -1433,7 +1459,7 @@ Fragment.plant('show-poster-manager-plant', function (params) {
         name: 'search Google for poster',
         icon: 'fa-regular fa-g',
         action: function () {
-            window.open("https://www.google.com/search?hl=en&tbm=isch&q=" + encodeURIComponent(show.name + " official poster"));
+            window.open("https://www.google.com/search?hl=en&tbm=isch&q=" + encodeURIComponent(show.name + (show.aired ? (" (" + show.aired.getFullYear() + ")") : "") + " official poster"));
         }
     }]);
     
@@ -1458,9 +1484,11 @@ Fragment.plant('show-poster-manager-plant', function (params) {
     }
     
     let objectUrl;
-    $imageUrl[0].addEventListener("paste", event => {
+    $imageUrl[0].addEventListener("paste", () => {
+        console.log('paste');
         navigator.clipboard.read().then(items => {
             let imagesItems = items.filter(e => e.types.some(type => type.startsWith("image/")));
+            console.log('imagesItems', imagesItems);
             if (imagesItems.length !== 0) {
                 let imageType = imagesItems[0].types.find(type => type.startsWith("image/"));
                 imagesItems[0].getType(imageType).then(blob => {
