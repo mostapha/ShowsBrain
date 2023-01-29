@@ -41,23 +41,10 @@ $(document).on('submit', 'form', function (e) {
 const db = new Dexie("showsMemory");
 
 
-var url = new URL(document.location.href);
-var c = url.searchParams.get("old");
-if(c === "1"){
-    db.version(2).stores({
-        shows: "++id, type, status, userStatus, *prequel, *sequel, *related",
-        images: "&id",
-        seasons: "++id, showId"
-    });
-} else {
-    db.version(4).stores({
-        shows: "++id, type, status, userStatus, *prequel, *sequel, *related",
-        seasons: "++id, showId",
-        test: "++id"
-    });
-}
-
-
+db.version(6).stores({
+    shows: "++id, type, status, userStatus, *prequel, *sequel, *related",
+    seasons: "++id, showId"
+});
 
 const reverseRelation = {
     sequel: 'prequel',
@@ -65,7 +52,6 @@ const reverseRelation = {
     related: 'related'
 }
 const validDateFormat = /^(?:(?:(?<Day>(?:3[0-1]|[1-2]\d|0?[1-9]))(?:[\s/-]))?(?<Month>(?:(?:1[0-2]|0?[1-9])|jan(?:uary|\.)?|feb(?:ruary|\.)?|mar(?:ch|\.)?|apr(?:il|\.)?|may.?|june?\.?|july?\.?|aug(?:ust)?\.?|sep(?:t|tember)?\.?|Oct(?:ober)?\.?|nov(?:ember)?\.?|dec(?:ember)?\.?))(?:[\s/-]))?(?<Year>\d{4})$/i
-
 
 document.querySelector('.add-show').addEventListener('click', function () {
     Fragment.select('shows-adder').push(function () {
@@ -1926,9 +1912,9 @@ $('.drawer button').click(function () {
                     })
                     
                     $sendBtn.click(function () {
-
+                        
                         db.export().then(blob => {
-    
+                            
                             console.log(blob);
                             conn.send(blob);
                             
@@ -2048,47 +2034,61 @@ $('.drawer button').click(function () {
                         conn.on('data', async function (data) {
                             
                             console.log("Data received", data);
-    
+                            
                             let currentDb = [];
-                            for(table of db.tables){
+                            for (table of db.tables) {
                                 currentDb.push({name: table.name, rowCount: await table.count()});
                             }
                             
-                            let blob = await Dexie.peek(new Blob([data], { type: 'text/json' }));
+                            let blob = new Blob([data], {type: 'text/json'});
                             
-                            console.log(blob);
+                            console.log('blob', blob);
+                            
+                            let blobPeek = await Dexie.peek(blob);
+                            
+                            console.log('blobPeek', blobPeek);
                             
                             // rows changes
-    
+                            
                             $receivedChanges.empty();
                             $receivedChanges.append('<h5 class="card-title">Changes</h5>');
-    
-                            if(blob.data.databaseVersion !== db.verno){
+                            
+                            if (blobPeek.data.databaseVersion !== db.verno) {
                                 $receivedChanges.append('<small class="d-block mb-2 mt-3 text-card">version change:</small>');
-                                $receivedChanges.append('<table class="table table-bordered"><thead class="table-light"><tr><th scope="col">current version</th><th scope="col">received version</th></tr></thead><tbody><tr><td>'+db.verno+'</td><td>'+blob.data.databaseVersion+'</td></tr></tbody></table>')
+                                $receivedChanges.append('<table class="table table-bordered"><thead class="table-light"><tr><th scope="col">current version</th><th scope="col">received version</th></tr></thead><tbody><tr><td>' + db.verno + '</td><td>' + blobPeek.data.databaseVersion + '</td></tr></tbody></table>')
                             }
                             
                             $receivedChanges.append('<small class="d-block mb-2 mt-3 text-card">updates rows:</small>');
-                            $receivedChanges.append('<table class="table table-bordered"><thead class="table-light"><tr><th scope="col">rows</th><th scope="col">before</th><th scope="col">after</th></tr></thead><tbody>' + blob.data.tables.map(toImportTable => {
+                            $receivedChanges.append('<table class="table table-bordered"><thead class="table-light"><tr><th scope="col">rows</th><th scope="col">before</th><th scope="col">after</th></tr></thead><tbody>' + blobPeek.data.tables.map(toImportTable => {
                                 let dtInCurrent = currentDb.find(e => e.name === toImportTable.name);
                                 return `<tr><th>${toImportTable.name}</th><td>${dtInCurrent ? dtInCurrent.rowCount : "not found (new table)"}</td><td class="fw-bold${toImportTable.rowCount < dtInCurrent?.rowCount ? ' text-danger' : toImportTable.rowCount > dtInCurrent?.rowCount ? ' text-success' : ''}">${toImportTable.rowCount}</td></tr>`
                             }).join('') + '</tbody></table>');
                             
                             // deleted tables
-                            let deletedTables = currentDb.filter(cdn => !blob.data.tables.some(e => e.name == cdn.name));
-                            if(deletedTables.length > 0){
+                            let deletedTables = currentDb.filter(cdn => !blobPeek.data.tables.some(e => e.name == cdn.name));
+                            if (deletedTables.length > 0) {
                                 $receivedChanges.append('<small class="d-block mb-2 mt-3 text-card">deleted tables:</small>');
-                                $receivedChanges.append('<table class="table table-bordered"><thead class="table-light"><tr><th scope="col">#</th><th scope="col">current rows</th></tr></thead><tbody>'+ deletedTables.map(deelted_table => {
+                                $receivedChanges.append('<table class="table table-bordered"><thead class="table-light"><tr><th scope="col">#</th><th scope="col">current rows</th></tr></thead><tbody>' + deletedTables.map(deelted_table => {
                                     return `<tr><th>${deelted_table.name}</th><td>${deelted_table.rowCount}</td></tr>`
-                                }).join('') +'</tbody></table>')
+                                }).join('') + '</tbody></table>')
                             }
                             
                             $receivedChanges.append('<button class="btn btn-danger mt-3" id="accept-changes">Apply this database</button>');
-    
-                            $receivedChanges.find('#accept-changes').click(function(){
-                               if(confirm('Apply this database? this action is irreversible. It\'s advisable to export the current database before applying the new one')){
-                                   alert('apply');
-                               }
+                            
+                            $receivedChanges.find('#accept-changes').click(function () {
+                                if (confirm('Apply this database? this action is irreversible. It\'s advisable to export the current database before applying the new one')) {
+                                    Dexie.import(blob, {
+                                        acceptNameDiff: false,
+                                        acceptChangedPrimaryKey: false,
+                                        overwriteValues: true,
+                                        acceptVersionDiff: true
+                                    }).then(e => {
+                                        alert('imported successfully, refreshing the app might be needed if the versions were different!');
+                                    }).catch(e => {
+                                        console.error(e);
+                                        alert(e.message);
+                                    })
+                                }
                             });
                             
                         });
