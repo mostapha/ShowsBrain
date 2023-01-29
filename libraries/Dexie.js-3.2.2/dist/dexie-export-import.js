@@ -3439,6 +3439,10 @@
     //
     // Extend Dexie interface (runtime wise)
     //
+    Dexie__default['default'].peek = function (exportedData) {
+        return peakImportFile(exportedData)
+    };
+    
     Dexie__default['default'].prototype.export = function (options) {
         return exportDB(this, options);
     };
@@ -3446,6 +3450,7 @@
         return importInto(this, blob, options);
     };
     Dexie__default['default'].import = function (blob, options) { return importDB(blob, options); };
+    
     var dexieExportImport = (function () {
         throw new Error("This addon extends Dexie.prototype globally and does not have be included in Dexie constructor's addons options.");
     });
