@@ -1767,6 +1767,205 @@ $('.drawer button').click(function () {
             
             break;
         }
+        case 'send-database': {
+            
+            let peer = null,
+                conn = null,
+                lastPeerId = null;
+    
+            function initialize() {
+                // Create own peer object with connection to shared PeerJS server
+                peer = new Peer('sender', {
+                    debug: 2
+                });
+        
+                peer.on('open', function () {
+                    console.log('open');
+                    // Workaround for peer.reconnect deleting previous id
+                    if (peer.id === null) {
+                        console.log('Received null id from peer open');
+                        peer.id = lastPeerId;
+                    } else {
+                        lastPeerId = peer.id;
+                    }
+            
+                    console.log('ID: ' + peer.id);
+                });
+        
+                // Emitted when a new data connection is established from a remote peer.
+                peer.on('connection', function (c) {
+                    console.log('connection');
+                    // Disallow incoming connections
+                    c.on('open', function() {
+                        c.send("Sender does not accept incoming connections");
+                        setTimeout(function() { c.close(); }, 500);
+                    });
+                });
+        
+                peer.on('disconnected', function () {
+                    console.log('disconnected');
+                    alert('disconnected');
+                    console.log('Connection lost. Please reconnect');
+            
+                    // Workaround for peer.reconnect deleting previous id
+                    peer.id = lastPeerId;
+                    peer._lastServerId = lastPeerId;
+                    peer.reconnect();
+                });
+        
+                peer.on('close', function() {
+                    console.log('close');
+                    
+                    conn = null;
+                    console.log('Connection destroyed');
+                });
+                peer.on('error', function (err) {
+                    console.error(err);
+                });
+            }
+    
+            /**
+             * Create the connection between the two Peers.
+             *
+             * Sets up callbacks that handle any events related to the
+             * connection and data received on it.
+             */
+            function join(peer_id) {
+                // Close old connection
+                if (conn) {
+                    conn.close();
+                }
+        
+                // Connects to the remote peer specified by id and returns a data connection.
+                // Be sure to listen on the error event in case the connection fails.
+                conn = peer.connect(peer_id, {
+                    reliable: true
+                });
+        
+                // Emitted when a connection to the PeerServer is established.
+                // You may use the peer before this is emitted, but messages to the server will be queued.
+                conn.on('open', function () {
+                    console.log("Connected to: " + conn.peer);
+                    alert("Connected to: " + conn.peer);
+            
+                    // Check URL params for comamnds that should be sent immediately
+                    // var command = getUrlParam("command");
+                    // if (command)
+                    //     conn.send(command);
+                });
+        
+                // Handle incoming data (messages only since this is the signal sender)
+                conn.on('data', function (data) {
+                    console.log('data', data);
+                });
+        
+                conn.on('close', function () {
+                    console.log("Connection closed");
+                });
+        
+            }
+    
+    
+    
+    
+            initialize();
+            
+            setTimeout(function(){
+                join('receiver');
+            }, 3000);
+            
+            
+            break;
+        }
+        case 'receive-database': {
+            
+            let peer = null,
+                conn = null,
+                lastPeerId = null;
+            
+            /**
+             * Create the Peer object for our end of the connection.
+             *
+             * Sets up callbacks that handle any events related to our
+             * peer object.
+             */
+            let initialize = function () {
+                // Create own peer object with connection to shared PeerJS server
+                peer = new Peer('receiver', {
+                    debug: 2
+                });
+                
+                peer.on('open', function (id) {
+                    // Workaround for peer.reconnect deleting previous id
+                    if (peer.id === null) {
+                        console.log('Received null id from peer open');
+                        peer.id = lastPeerId;
+                    } else {
+                        lastPeerId = peer.id;
+                    }
+                    
+                    console.log('ID: ' + peer.id);
+                    console.log("Awaiting connection...");
+                    alert("Awaiting connection...");
+                });
+                
+                peer.on('connection', function (c) {
+                    // Allow only a single connection
+                    if (conn && conn.open) {
+                        c.on('open', function () {
+                            c.send("Already connected to another client");
+                            setTimeout(function () {
+                                c.close();
+                            }, 500);
+                        });
+                        return;
+                    }
+                    
+                    conn = c;
+                    console.log("Connected to: " + conn.peer);
+                    alert("Connected to: " + conn.peer);
+                    
+                    ready();
+                    
+                });
+                
+                peer.on('disconnected', function () {
+                    console.log('Connection lost. Please reconnect');
+                    // Workaround for peer.reconnect deleting previous id
+                    peer.id = lastPeerId;
+                    peer._lastServerId = lastPeerId;
+                    peer.reconnect();
+                });
+                peer.on('close', function () {
+                    conn = null;
+                    console.log('Connection destroyed');
+                });
+                peer.on('error', function (err) {
+                    console.log(err);
+                    alert('' + err);
+                });
+            };
+            
+            /**
+             * Triggered once a connection has been achieved.
+             * Defines callbacks to handle incoming data and connection events.
+             */
+            function ready() {
+                conn.on('data', function (data) {
+                    console.log("Data received", data);
+                    alert("Data received", data);
+                });
+                conn.on('close', function () {
+                    console.log("Connection reset, Awaiting connection...");
+                    conn = null;
+                });
+            }
+    
+    
+            initialize();
+            
+            break;
+        }
         case 'open-google': {
             window.open("https://www.google.com/");
             break;

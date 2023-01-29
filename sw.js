@@ -1,5 +1,5 @@
 
-const cacheName = "brain-cache-v8";
+const cacheName = "brain-cache-v9";
 
 let appShellFiles = [
     // html
@@ -30,6 +30,7 @@ let appShellFiles = [
     "/ShowsBrain/libraries/Dexie.js-3.2.2/dist/dexie.js",
     "/ShowsBrain/libraries/Dexie.js-3.2.2/dist/dexie-export-import.js",
     "/ShowsBrain/libraries/downloadjs-1.4.8/download.min.js",
+    "/ShowsBrain/libraries/peerjs@1.4.7/dist/peerjs.min.js",
     "/ShowsBrain/libraries/pako/2.0.4/pako.min.js",
     "/ShowsBrain/libraries/bootstrap/js/bootstrap.bundle.js",
     "/ShowsBrain/js/helper.js",

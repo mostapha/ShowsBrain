@@ -39,7 +39,7 @@
 <div class="showcase">
 
 </div>
-<input type="file" id="file-selector" style="display: none"/>
+<input id="file-selector" style="display: none" type="file"/>
 
 <div class="drawer-container">
     <div class="drawer">
@@ -57,6 +57,18 @@
                 <i class="fa-duotone fa-inbox-in fa-fw fa-lg"
                    style="/* --fa-primary-color: #5a19d1; *//* --fa-secondary-color: #e5e5e5; *//* --fa-secondary-opacity: 1; */"></i>
                 <span class="ms-3">Import Database</span>
+            </button>
+            <button class="align-items-center border-0 d-flex list-group-item list-group-item-action py-3"
+                    data-action="send-database">
+                <i class="fa-duotone fa-paper-plane fa-fw fa-lg"
+                   style="/* --fa-primary-color: #5a19d1; *//* --fa-secondary-color: #e5e5e5; *//* --fa-secondary-opacity: 1; */"></i>
+                <span class="ms-3">Send Database</span>
+            </button>
+            <button class="align-items-center border-0 d-flex list-group-item list-group-item-action py-3"
+                    data-action="receive-database">
+                <i class="fa-duotone fa-signal-stream fa-fw fa-lg"
+                   style="/* --fa-primary-color: #5a19d1; *//* --fa-secondary-color: #e5e5e5; *//* --fa-secondary-opacity: 1; */"></i>
+                <span class="ms-3">Receive Database</span>
             </button>
             <button class="align-items-center border-0 d-flex list-group-item py-3 list-group-item-action"
                     data-action="open-google">
@@ -482,8 +494,9 @@
 
 <script src="libraries/jQuery/jquery.js"></script>
 <script src="libraries/Dexie.js-3.2.2/dist/dexie.js"></script>
-<script src="libraries/Dexie.js-3.2.2/dist/dexie-export-import.js" async defer></script>
-<script src="libraries/downloadjs-1.4.8/download.min.js" async defer></script>
+<script async defer src="libraries/Dexie.js-3.2.2/dist/dexie-export-import.js"></script>
+<script async defer src="libraries/downloadjs-1.4.8/download.min.js"></script>
+<script async defer src="libraries/peerjs@1.4.7/dist/peerjs.min.js"></script>
 <script src="libraries/pako/2.0.4/pako.min.js"></script>
 <script src="libraries/bootstrap/js/bootstrap.bundle.js"></script>
 <script src="js/helper.js"></script>
