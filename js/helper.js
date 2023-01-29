@@ -345,6 +345,7 @@ const Helper = (() => {
     };
     
     return {
+        
         domFromHTML(html) {
             const template = document.createElement('template');
             template.innerHTML = html.trim();

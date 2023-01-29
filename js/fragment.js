@@ -234,6 +234,10 @@ const Fragment = (() => {
     
     let plantedFunctions = {};
     
+    /**
+     * @param id
+     * @return {FragmentGenerator}
+     */
     function selectFragment(id) {
         if(activities.has(id)){
             return activities.get(id);

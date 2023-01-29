@@ -485,6 +485,34 @@
         </div>
     </div>
 
+    <div data-template-name="sender">
+        <div class="border-0 card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Create a connection</h5>
+                <p class="card-text">Make sure the receiver is awaiting a connection then press connect</p>
+                <button class="btn btn-light" id="connect">Connect</button>
+            </div>
+        </div>
+        <div class="border-0 card">
+            <div class="card-body">
+                <h5 class="card-title">Send Database</h5>
+                <p class="card-text">When you set up the connection, you can send the send the db from here</p>
+                <button class="btn btn-primary" disabled id="send-db">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <div data-template-name="receiver">
+        <div class="border-0 card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Wait for connection</h5>
+                <p class="card-text">You need to wait for a connection from a sender, when the connection is created you
+                    can receive the file</p>
+                <button class="btn btn-primary" id="receive">Receive</button>
+            </div>
+        </div>
+    </div>
+
 </template>
 
 
