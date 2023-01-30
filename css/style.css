@@ -463,3 +463,21 @@ nav button {
     visibility: visible;
     opacity: 0.5;
 }
+
+.imdb-col {
+    position: relative;
+    z-index: 9;
+    opacity: 0.3;
+}
+.imdb-col.available {
+    opacity: 1;
+}
+.imdb-col img {
+    width: 100px;
+    height: auto;
+    max-width: min(45%, 40px);
+    display: block;
+    margin: 0 auto;
+    border-radius: 50%;
+    cursor: pointer;
+}

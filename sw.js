@@ -1,5 +1,5 @@
 
-const cacheName = "brain-cache-v10";
+const cacheName = "brain-cache-v11";
 
 let appShellFiles = [
     // html
@@ -39,7 +39,8 @@ let appShellFiles = [
     
     // images
     "/ShowsBrain/favicon.ico",
-    "/ShowsBrain/images/pixel.png"
+    "/ShowsBrain/images/pixel.png",
+    "/ShowsBrain/images/imdb-60px.png"
 ]
 
 self.addEventListener("install", (e) => {

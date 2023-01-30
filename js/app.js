@@ -670,6 +670,22 @@ Fragment.plant('show-interface', function (params) {
                     params: {show: show}
                 })
             });
+    
+            let $imdbIcon = $t.find('.imdb-col img');
+            if(show.IMDbId){
+                // xxx
+                $imdbIcon.parent().addClass('available');
+                $imdbIcon.click(function(){
+                    window.open("https://imdb.com/title/" + show.IMDbId);
+                })
+            } else {
+                $imdbIcon.click(function(){
+                    $t.prop('Fragment').push({
+                        name: 'show-edit-plant',
+                        params: {show: show}
+                    })
+                });
+            }
             
         },
         complete: cm => {
@@ -1183,6 +1199,13 @@ Fragment.plant("show-edit-plant", function (params) {
     let $t = $(this);
     
     this.setTitle("Edit " + show.name);
+    this.registerNavAction([{
+        name: 'User preferences',
+        icon: 'fa-brands fa-google',
+        action: function () {
+            window.open("https://www.google.com/search?hl=en&q=" + encodeURIComponent(show.name + (show.aired ? (" (" + show.aired.getFullYear() + ")") : "")));
+        }
+    }])
     
     $t.html(templates['show-edit-form'].cloneNode(1));
     
