@@ -1764,8 +1764,9 @@ importDBinput.addEventListener("change", function () {
         Dexie.import(blob, {
             acceptNameDiff: false,
             acceptChangedPrimaryKey: false,
-            acceptMissingTables: false,
             overwriteValues: true,
+            acceptVersionDiff: fals,
+            clearTablesBeforeImport: true
         }).then(e => {
             alert('imported successfully');
         }).catch(e => {
@@ -2104,7 +2105,8 @@ $('.drawer button').click(function () {
                                         acceptNameDiff: false,
                                         acceptChangedPrimaryKey: false,
                                         overwriteValues: true,
-                                        acceptVersionDiff: true
+                                        acceptVersionDiff: fals,
+                                        clearTablesBeforeImport: true
                                     }).then(e => {
                                         alert('imported successfully, refreshing the app might be needed if the versions were different!');
                                     }).catch(e => {
