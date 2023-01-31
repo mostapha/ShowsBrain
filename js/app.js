@@ -41,8 +41,8 @@ $(document).on('submit', 'form', function (e) {
 const db = new Dexie("showsMemory");
 
 
-db.version(6).stores({
-    shows: "++id, type, status, userStatus, *prequel, *sequel, *related",
+db.version(7).stores({
+    shows: "++id, type, status, updated, userStatus, *prequel, *sequel, *related",
     seasons: "++id, showId"
 });
 
@@ -76,7 +76,8 @@ document.querySelector('.add-show').addEventListener('click', function () {
                     ...($showAired.val().trim() !== "" && {aired: parseDate($showAired.val())}),
                     type: $showType.val(),
                     seasonsCount: parseInt($showSeasonsCount.val()),
-                    added: new Date()
+                    added: new Date(),
+                    updated: new Date()
                 };
                 
                 return db.shows.add(dataAdded).then(showId => {
@@ -653,7 +654,7 @@ Fragment.plant('show-interface', function (params) {
                 }
             })
             
-            $t.find('img[src="images/pixel.png"]').click(function () {
+            $t.find('.poster img').click(function () {
                 $t.prop('Fragment').push({
                     name: "show-poster-manager-plant",
                     params: {show: show}
@@ -762,183 +763,13 @@ Fragment.plant('season-interface', function (params) {
                                     break;
                                 }
                                 case "edit-season-poster": {
-                                    Fragment.select('season-info').push(function () {
-                                        let self = this,
-                                            $t = $(self);
-                                        
-                                        self.registerNavAction([{
-                                            name: 'Apply as show poster',
-                                            id: 'make-as-show-poster',
-                                            icon: 'fa-regular fa-arrow-up-from-bracket',
-                                            action: function () {
-                                                if (season.poster) {
-                                                    console.log('seasons id', season.showId);
-                                                    console.log('season poster', season.poster);
-                                                    console.log('show poster', show.poster)
-                                                    if (confirm('apply this season poster as the show poster? you can\'t undo this change')) {
-                                                        db.shows.where({id: season.showId}).modify(s => {
-                                                            s.poster = season.poster
-                                                        }).then(n => {
-                                                            if (n === 1) {
-                                                                alert('Applied successfully');
-                                                            }
-                                                        }).catch(err => {
-                                                            console.error(err);
-                                                            alert(err.message)
-                                                        })
-                                                    }
-                                                } else {
-                                                    alert('poster is not found');
-                                                }
-                                            },
-                                            disabled: true
-                                        }, {
-                                            name: 'search Google for poster',
-                                            icon: 'fa-regular fa-g',
-                                            action: function () {
-                                                window.open("https://www.google.com/search?hl=en&tbm=isch&q=" + encodeURIComponent(show.name + ' ' + (season.name ? season.name : "S" + season.position) + (season.aired ? " (" + season.aired.getFullYear() + ")" : "") + ' official poster'));
-                                            }
-                                        }]);
-                                        
-                                        $t.html(templates['upload-image'].cloneNode(1));
-                                        
-                                        let $imageUrl = $t.find('#set-image-url'),
-                                            $posterImg = $t.find('.poster img');
-                                        
-                                        let $getImage = $t.find('#get-image'),
-                                            $saveBtn = $t.find('#save-image');
-                                        
-                                        $posterImg.attr('data-poster', 'season-id-' + season.id);
-                                        
-                                        if (season.poster) {
-                                            
-                                            self.previousElementSibling.querySelector('#make-as-show-poster').disabled = false
-                                            
-                                            let objUrl = inflateAndGetObject(season.poster)
-                                            $posterImg[0].onload = function () {
-                                                URL.revokeObjectURL(objUrl);
-                                            }
-                                            $posterImg[0].src = objUrl;
+                                    Fragment.select('season-info').push({
+                                        name: "season-poster-manager-plant",
+                                        params: {
+                                            show: show,
+                                            season: season
                                         }
-                                        
-                                        let objectUrl;
-                                        
-                                        $imageUrl[0].addEventListener("paste", () => {
-                                            console.log('paste');
-                                            navigator.clipboard.read().then(items => {
-                                                let imagesItems = items.filter(e => e.types.some(type => type.startsWith("image/")));
-                                                console.log('imagesItems', imagesItems);
-                                                if (imagesItems.length !== 0) {
-                                                    let imageType = imagesItems[0].types.find(type => type.startsWith("image/"));
-                                                    imagesItems[0].getType(imageType).then(blob => {
-                                                        
-                                                        let imageUrl = URL.createObjectURL(blob)
-                                                        objectUrl = imageUrl;
-                                                        
-                                                        $saveBtn.prop('disabled', false);
-                                                        $posterImg[0].src = imageUrl
-                                                        
-                                                    })
-                                                } else {
-                                                    alert('available types are: ' + Array.from(new Set(items.flatMap(e => e.types))).join(', '));
-                                                }
-                                            }).catch((err) => {
-                                                console.error(err);
-                                                alert(err.message);
-                                            });
-                                        });
-                                        
-                                        $getImage.click(function () {
-                                            let self = this,
-                                                $self = $(self);
-                                            
-                                            let val = $imageUrl.val();
-                                            if (val.trim() === "") {
-                                                alert('add image url');
-                                            } else {
-                                                $self.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
-                                                $saveBtn.prop('disabled', true);
-                                                
-                                                console.log('valid url', val);
-                                                
-                                                if (objectUrl) {
-                                                    URL.revokeObjectURL(objectUrl);
-                                                    objectUrl = null;
-                                                }
-                                                
-                                                Helper.getImage(val, true).then(blob => {
-                                                    // save it, we will use it when we confirm adding image
-                                                    
-                                                    let imageUrl = URL.createObjectURL(blob)
-                                                    
-                                                    objectUrl = imageUrl;
-                                                    
-                                                    console.log('blob', blob);
-                                                    console.log('objectUrl', imageUrl);
-                                                    
-                                                    $saveBtn.prop('disabled', false);
-                                                    $self.text('Get').prop('disabled', false);
-                                                    
-                                                    $posterImg[0].src = imageUrl
-                                                }).catch(n => {
-                                                    console.error(n);
-                                                    $posterImg[0].attr('src', 'images/pixel.png');
-                                                    $saveBtn.prop('disabled', true);
-                                                    $self.text('Get').prop('disabled', false);
-                                                });
-                                                
-                                            }
-                                        })
-                                        
-                                        $saveBtn.click(function () {
-                                            console.log('set image to:', 'season' + season.id);
-                                            console.log('objectUrl', objectUrl)
-                                            
-                                            Helper.resizePoster(objectUrl).then(blob => {
-                                                blob.arrayBuffer().then(buffer => {
-                                                    let arrayBuffer = new Uint8Array(buffer);
-                                                    db.seasons.where({id: season.id}).modify(season => {
-                                                        season.poster = pako.deflate(arrayBuffer);
-                                                    }).then(n => {
-                                                        if (n === 1) {
-                                                            document.querySelectorAll('img[data-poster="season-id-' + season.id + '"]').forEach(n => {
-                                                                let obj = URL.createObjectURL(blob);
-                                                                n.onload = function () {
-                                                                    URL.revokeObjectURL(obj);
-                                                                }
-                                                                n.src = obj
-                                                            });
-                                                            URL.revokeObjectURL(objectUrl);
-                                                            console.log('saved');
-                                                            
-                                                            $t.prop('Fragment').home();
-                                                        } else {
-                                                            alert('unexpected reach');
-                                                        }
-                                                    });
-                                                });
-                                            });
-                                        })
-                                        
-                                        
-                                        if (undefined !== season.poster) {
-                                            let $removePoster = $t.find('#remove-poster');
-                                            $removePoster.prop('disabled', false);
-                                            $removePoster.click(function () {
-                                                if (confirm('remove this season poster?')) {
-                                                    db.seasons.where({id: season.id}).modify(n => {
-                                                        delete n.poster;
-                                                    }).then(n => {
-                                                        console.log('poster removed', n);
-                                                        $posterImg[0].src = "images/pixel.png"
-                                                    })
-                                                }
-                                            });
-                                        }
-                                        
-                                        
-                                    }, (season.name || (show.name + " " + appendOrdinalSuffix(season.position) + " season")) + "'s poster");
-                                    
+                                    });
                                     break;
                                 }
                                 default: {
@@ -1026,7 +857,17 @@ Fragment.plant('season-interface', function (params) {
                 summaryElem.textContent = season.summary;
                 self.append(titleElem, summaryElem);
             }
-            
+    
+    
+            $t.find('.poster img').click(function () {
+                $t.prop('Fragment').push({
+                    name: "season-poster-manager-plant",
+                    params: {
+                        show: show,
+                        season: season
+                    }
+                });
+            });
             
             $t.find('#quick-show-status').click(function () {
                 $t.prop('Fragment').push({
@@ -1075,7 +916,6 @@ Fragment.plant('show-classifier-plant', function (params) {
     $t.find('#classify-show').submit(function () {
         let changes = {
             userStatus: showUserStatus.val() === show.userStatus || (showUserStatus.val().trim() === "" && !show.userStatus) ? false : showUserStatus.val(),
-            rating: isNaN(parseInt(showRating.val())) || parseInt(showRating.val()) === show.rating ? (showRating.val().trim() === "" && show.rating !== undefined ? 0 : false) : parseInt(showRating.val()),
             notes: showNotes.val().trim() === (show.notes ?? "") ? false : showNotes.val().trim(),
         }
         console.log(changes)
@@ -1089,13 +929,16 @@ Fragment.plant('show-classifier-plant', function (params) {
                             value = n[1];
                         
                         console.log(key, value);
-                        if ((key === "rating" && value === 0) || (key === "notes" && value === "")) {
+                        if (key === "notes" && value === "") {
                             delete _show[key]
                         } else {
                             _show[key] = value;
                         }
-                        
                     });
+                    
+                    // update time
+                    _show.updated = new Date();
+                    
                     console.log('final', _show);
                 })
             }).then(changes => {
@@ -1359,6 +1202,9 @@ Fragment.plant("show-edit-plant", function (params) {
                             } else s[key] = value
                             
                         }
+                        
+                        // update time
+                        s.updated = new Date();
                     }));
                     
                 });
@@ -1585,6 +1431,10 @@ Fragment.plant('show-poster-manager-plant', function (params) {
                 let arrayBuffer = new Uint8Array(buffer);
                 db.shows.where({id: show.id}).modify(show => {
                     show.poster = pako.deflate(arrayBuffer);
+                    
+                    // update time
+                    show.updated = new Date();
+                    
                 }).then(n => {
                     if (n === 1) {
                         URL.revokeObjectURL(objectUrl);
@@ -1605,6 +1455,10 @@ Fragment.plant('show-poster-manager-plant', function (params) {
             if (confirm('remove this season poster?')) {
                 db.shows.where({id: show.id}).modify(n => {
                     delete n.poster;
+                    
+                    // update time
+                    n.updated = new Date();
+                    
                 }).then(n => {
                     console.log('poster removed', n);
                     $posterImg[0].src = "images/pixel.png"
@@ -1613,6 +1467,185 @@ Fragment.plant('show-poster-manager-plant', function (params) {
         });
     }
     
+})
+
+Fragment.plant('season-poster-manager-plant', function (params) {
+    const show = params.show,
+        season = params.season;
+    
+    let self = this,
+        $t = $(self);
+    
+    self.setTitle((season.name || (show.name + " " + appendOrdinalSuffix(season.position) + " season")) + "'s poster");
+    self.registerNavAction([{
+        name: 'Apply as show poster',
+        id: 'make-as-show-poster',
+        icon: 'fa-regular fa-arrow-up-from-bracket',
+        action: function () {
+            if (season.poster) {
+                console.log('seasons id', season.showId);
+                console.log('season poster', season.poster);
+                console.log('show poster', show.poster)
+                if (confirm('apply this season poster as the show poster? you can\'t undo this change')) {
+                    db.shows.where({id: season.showId}).modify(s => {
+                        s.poster = season.poster
+                    }).then(n => {
+                        if (n === 1) {
+                            alert('Applied successfully');
+                        }
+                    }).catch(err => {
+                        console.error(err);
+                        alert(err.message)
+                    })
+                }
+            } else {
+                alert('poster is not found');
+            }
+        },
+        disabled: true
+    }, {
+        name: 'search Google for poster',
+        icon: 'fa-regular fa-g',
+        action: function () {
+            window.open("https://www.google.com/search?hl=en&tbm=isch&q=" + encodeURIComponent(show.name + ' ' + (season.name ? season.name : "S" + season.position) + (season.aired ? " (" + season.aired.getFullYear() + ")" : "") + ' official poster'));
+        }
+    }]);
+    
+    $t.html(templates['upload-image'].cloneNode(1));
+    
+    let $imageUrl = $t.find('#set-image-url'),
+        $posterImg = $t.find('.poster img');
+    
+    let $getImage = $t.find('#get-image'),
+        $saveBtn = $t.find('#save-image');
+    
+    $posterImg.attr('data-poster', 'season-id-' + season.id);
+    
+    if (season.poster) {
+        
+        self.previousElementSibling.querySelector('#make-as-show-poster').disabled = false
+        
+        let objUrl = inflateAndGetObject(season.poster)
+        $posterImg[0].onload = function () {
+            URL.revokeObjectURL(objUrl);
+        }
+        $posterImg[0].src = objUrl;
+    }
+    
+    let objectUrl;
+    
+    $imageUrl[0].addEventListener("paste", () => {
+        console.log('paste');
+        navigator.clipboard.read().then(items => {
+            let imagesItems = items.filter(e => e.types.some(type => type.startsWith("image/")));
+            console.log('imagesItems', imagesItems);
+            if (imagesItems.length !== 0) {
+                let imageType = imagesItems[0].types.find(type => type.startsWith("image/"));
+                imagesItems[0].getType(imageType).then(blob => {
+                    
+                    let imageUrl = URL.createObjectURL(blob)
+                    objectUrl = imageUrl;
+                    
+                    $saveBtn.prop('disabled', false);
+                    $posterImg[0].src = imageUrl
+                    
+                })
+            } else {
+                alert('available types are: ' + Array.from(new Set(items.flatMap(e => e.types))).join(', '));
+            }
+        }).catch((err) => {
+            console.error(err);
+            alert(err.message);
+        });
+    });
+    
+    $getImage.click(function () {
+        let self = this,
+            $self = $(self);
+        
+        let val = $imageUrl.val();
+        if (val.trim() === "") {
+            alert('add image url');
+        } else {
+            $self.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+            $saveBtn.prop('disabled', true);
+            
+            console.log('valid url', val);
+            
+            if (objectUrl) {
+                URL.revokeObjectURL(objectUrl);
+                objectUrl = null;
+            }
+            
+            Helper.getImage(val, true).then(blob => {
+                // save it, we will use it when we confirm adding image
+                
+                let imageUrl = URL.createObjectURL(blob)
+                
+                objectUrl = imageUrl;
+                
+                console.log('blob', blob);
+                console.log('objectUrl', imageUrl);
+                
+                $saveBtn.prop('disabled', false);
+                $self.text('Get').prop('disabled', false);
+                
+                $posterImg[0].src = imageUrl
+            }).catch(n => {
+                console.error(n);
+                $posterImg[0].attr('src', 'images/pixel.png');
+                $saveBtn.prop('disabled', true);
+                $self.text('Get').prop('disabled', false);
+            });
+            
+        }
+    })
+    
+    $saveBtn.click(function () {
+        console.log('set image to:', 'season' + season.id);
+        console.log('objectUrl', objectUrl)
+        
+        Helper.resizePoster(objectUrl).then(blob => {
+            blob.arrayBuffer().then(buffer => {
+                let arrayBuffer = new Uint8Array(buffer);
+                db.seasons.where({id: season.id}).modify(season => {
+                    season.poster = pako.deflate(arrayBuffer);
+                }).then(n => {
+                    if (n === 1) {
+                        document.querySelectorAll('img[data-poster="season-id-' + season.id + '"]').forEach(n => {
+                            let obj = URL.createObjectURL(blob);
+                            n.onload = function () {
+                                URL.revokeObjectURL(obj);
+                            }
+                            n.src = obj
+                        });
+                        URL.revokeObjectURL(objectUrl);
+                        console.log('saved');
+                        
+                        $t.prop('Fragment').home();
+                    } else {
+                        alert('unexpected reach');
+                    }
+                });
+            });
+        });
+    })
+    
+    
+    if (undefined !== season.poster) {
+        let $removePoster = $t.find('#remove-poster');
+        $removePoster.prop('disabled', false);
+        $removePoster.click(function () {
+            if (confirm('remove this season poster?')) {
+                db.seasons.where({id: season.id}).modify(n => {
+                    delete n.poster;
+                }).then(n => {
+                    console.log('poster removed', n);
+                    $posterImg[0].src = "images/pixel.png"
+                })
+            }
+        });
+    }
 })
 
 
