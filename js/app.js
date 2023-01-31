@@ -424,7 +424,7 @@ Fragment.plant('show-interface', function (params) {
                                                                 Promise.all([
                                                                     updateOrigin,
                                                                     updateRelated
-                                                                ]).then(x => {
+                                                                ]).then(() => {
                                                                     return resolve();
                                                                 })
                                                             }
@@ -704,8 +704,7 @@ Fragment.plant('show-interface', function (params) {
     }
 });
 Fragment.plant('season-interface', function (params) {
-    const season = params.season,
-        show = params.show;
+    const show = params.show;
     
     const seasonObservable = Dexie.liveQuery(() => db.seasons.get({id: params.season.id}));
     const seasonSubscription = seasonObservable.subscribe({
@@ -1382,8 +1381,7 @@ Fragment.plant("show-edit-plant", function (params) {
     
 })
 Fragment.plant("season-edit-plant", function (params) {
-    const season = params.season,
-        show = params.show;
+    const season = params.season;
     
     let self = this,
         $t = $(self);
@@ -1726,8 +1724,7 @@ $showcase.on('active', function () {
 });
 
 
-let $drawer = $('.drawer'),
-    $drawerContainer = $('.drawer-container'),
+let $drawerContainer = $('.drawer-container'),
     $drawerDim = $('.drawer-dim'),
     drawerOpen = false;
 
@@ -1768,9 +1765,9 @@ importDBinput.addEventListener("change", function () {
             acceptNameDiff: false,
             acceptChangedPrimaryKey: false,
             overwriteValues: true,
-            acceptVersionDiff: fals,
+            acceptVersionDiff: false,
             clearTablesBeforeImport: true
-        }).then(e => {
+        }).then(() => {
             alert('imported successfully');
         }).catch(e => {
             console.error(e);
@@ -1987,7 +1984,7 @@ $('.drawer button').click(function () {
                         });
                         
                         // Emitted when a connection to the PeerServer is established
-                        peer.on('open', function (id) {
+                        peer.on('open', function () {
                             // // Workaround for peer.reconnect deleting previous id
                             if (peer.id === null) {
                                 console.log('Received null id from peer open');
@@ -2092,7 +2089,7 @@ $('.drawer button').click(function () {
                             }).join('') + '</tbody></table>');
                             
                             // deleted tables
-                            let deletedTables = currentDb.filter(cdn => !blobPeek.data.tables.some(e => e.name == cdn.name));
+                            let deletedTables = currentDb.filter(cdn => !blobPeek.data.tables.some(e => e.name === cdn.name));
                             if (deletedTables.length > 0) {
                                 $receivedChanges.append('<small class="d-block mb-2 mt-3 text-card">deleted tables:</small>');
                                 $receivedChanges.append('<table class="table table-bordered"><thead class="table-light"><tr><th scope="col">#</th><th scope="col">current rows</th></tr></thead><tbody>' + deletedTables.map(deelted_table => {
@@ -2108,9 +2105,9 @@ $('.drawer button').click(function () {
                                         acceptNameDiff: false,
                                         acceptChangedPrimaryKey: false,
                                         overwriteValues: true,
-                                        acceptVersionDiff: fals,
+                                        acceptVersionDiff: false,
                                         clearTablesBeforeImport: true
-                                    }).then(e => {
+                                    }).then(() => {
                                         alert('imported successfully, refreshing the app might be needed if the versions were different!');
                                     }).catch(e => {
                                         console.error(e);
