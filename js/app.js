@@ -905,11 +905,9 @@ Fragment.plant('show-classifier-plant', function (params) {
     $t.html(templates['classify-show'].cloneNode(1));
     
     let showUserStatus = $t.find('#edit-show-userStatus'),
-        showRating = $t.find('#edit-show-rating'),
         showNotes = $t.find('#edit-show-notes');
     
     showUserStatus.val(show.userStatus ?? "");
-    showRating.val(show.rating ?? "");
     showNotes.val(show.notes ?? "");
     
     
@@ -1067,7 +1065,8 @@ Fragment.plant("show-edit-plant", function (params) {
         showSeasonsCount = $t.find('#edit-show-seasons-count'),
         showStatus = $t.find('#edit-show-status'),
         showLanguage = $t.find('#edit-show-language'),
-        showIMDbId = $t.find('#edit-show-imdb-id');
+        showIMDbId = $t.find('#edit-show-imdb-id'),
+        showDiscovered = $t.find('#edit-show-discovered');
     
     showId.val(show.id);
     showAdded.val(Helper.formatDate(show.added));
@@ -1080,6 +1079,7 @@ Fragment.plant("show-edit-plant", function (params) {
     
     showLanguage.val(show.language ?? "");
     showIMDbId.val(show.IMDbId ?? "");
+    showDiscovered.val(show.discovered ?? "");
     
     
     $t.find('#show-edit-form').submit(function () {
@@ -1088,21 +1088,16 @@ Fragment.plant("show-edit-plant", function (params) {
         
         let changes = {
             name: showName.val().trim() === show.name ? false : showName.val().trim(),
-            
             type: showType.val() === show.type ? false : showType.val(),
-            
             aired: showAired.val() === "" ? (show.aired ? 0 : false) : parseDate(showAired.val()).getTime() === show.aired?.getTime() ? false : parseDate(showAired.val()),
-            
             summary: showSummary.val().trim() === "" ? (show.summary ? 0 : false) : (showSummary.val() === show.summary ? false : showSummary.val().trim()),
-            
+            discovered: showDiscovered.val().trim() === "" ? (show.discovered ? 0 : false) : (showDiscovered.val() === show.discovered ? false : showDiscovered.val().trim()),
             seasonsCount: showSeasonsCount.val() === "" ? (show.seasonsCount !== undefined ? 0 : false) : (parseInt(showSeasonsCount.val()) === show.seasonsCount ? false : parseInt(showSeasonsCount.val())),
-            
             status: showStatus.val() === "" ? (show.status ? 0 : false) : (showStatus.val() === show.status ? false : showStatus.val()),
             language: showLanguage.val() === "" ? (show.language ? 0 : false) : (showLanguage.val() === show.language ? false : showLanguage.val()),
             IMDbId: showIMDbId.val() === "" ? (show.IMDbId ? 0 : false) : (showIMDbId.val() === show.IMDbId ? false : showIMDbId.val())
         }
         
-        console.log("CHANGES:===============")
         console.log(changes)
         
         let checkChanges = Object.entries(changes).filter(n => n[1] !== false);
