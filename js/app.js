@@ -779,6 +779,9 @@ Fragment.plant('season-interface', function (params) {
                                                             if (n === 1) {
                                                                 alert('Applied successfully');
                                                             }
+                                                        }).catch(err => {
+                                                            console.error(err);
+                                                            alert(err.message)
                                                         })
                                                     }
                                                 } else {
