@@ -587,17 +587,17 @@ Fragment.plant('show-interface', function (params) {
             
             let getSeasons = db.seasons.where({showId: show.id}).toArray(),
                 getRelatedShows = relatedShows.length > 0 ? db.shows.where('id').anyOf(relatedShows).toArray() : null;
-    
+            
             // get raiting
             getSeasons.then(seasons => {
                 console.log('gs', seasons);
-    
+                
                 let ratings = seasons.map(e => e.rating),
                     averageRating = ratings.reduce((a, b) => b === null ? a : a + b, 0) / ratings.filter(x => x !== null).length;
-    
+                
                 console.log('averageRating', averageRating);
                 userPrefs.querySelector('.rating .icon-helper').textContent = isNaN(averageRating) ? "N/A" : averageRating.toFixed(2) + "";
-                if(!isNaN(averageRating)){
+                if (!isNaN(averageRating)) {
                     userPrefs.querySelector('.rating .icon').classList.add('active-star');
                 }
             })
@@ -675,16 +675,16 @@ Fragment.plant('show-interface', function (params) {
                     params: {show: show}
                 })
             });
-    
+            
             let $imdbIcon = $t.find('.imdb-col img');
-            if(show.IMDbId){
+            if (show.IMDbId) {
                 // xxx
                 $imdbIcon.parent().addClass('available');
-                $imdbIcon.click(function(){
+                $imdbIcon.click(function () {
                     window.open("https://imdb.com/title/" + show.IMDbId);
                 })
             } else {
-                $imdbIcon.click(function(){
+                $imdbIcon.click(function () {
                     $t.prop('Fragment').push({
                         name: 'show-edit-plant',
                         params: {show: show}
@@ -857,8 +857,8 @@ Fragment.plant('season-interface', function (params) {
                 summaryElem.textContent = season.summary;
                 self.append(titleElem, summaryElem);
             }
-    
-    
+            
+            
             $t.find('.poster img').click(function () {
                 $t.prop('Fragment').push({
                     name: "season-poster-manager-plant",
@@ -1656,7 +1656,7 @@ let inflateAndGetObject = (data) => {
     return URL.createObjectURL(blob);
 }
 
-function revoke(){
+function revoke() {
     URL.revokeObjectURL(this.src);
 }
 
@@ -1724,20 +1724,12 @@ const observable = Dexie.liveQuery(() => db.shows.toArray());
 const observingFunction = {
     next: shows => {
         console.log('shows', shows);
+    
+        shows = shows.sort(function (a, b) {
+            return b.updated - a.updated
+        });
         
         $showcase.empty();
-        
-        //
-        // {
-        //     let elem = tt.cloneNode(1),
-        //         titles_container = elem.querySelector('.show-list-inner');
-        //
-        //     elem.querySelector('h2').textContent = "All titles";
-        //     shows.forEach(show => {
-        //         titles_container.append(generateShowCard(show))
-        //     })
-        //     $showcase.append(elem)
-        // }
         
         collections.forEach(([name, f]) => {
             let elem = tt.cloneNode(1),
