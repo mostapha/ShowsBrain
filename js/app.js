@@ -557,16 +557,6 @@ Fragment.plant('show-interface', function (params) {
             let userPrefs = templates['user-prefs'].cloneNode(1);
             self.append(userPrefs);
             
-            if (show.rating !== undefined) {
-                let rHelper = userPrefs.querySelector(".rating .icon-helper");
-                
-                rHelper.classList.add('fw-bolder');
-                rHelper.textContent = show.rating + "/10"
-                
-                userPrefs.querySelector(".rating .icon").classList.add('active-star');
-                
-            }
-            
             if (show.userStatus) {
                 userPrefs.querySelector(".user-status .icon").classList.add(show.userStatus.toLowerCase().split(/\s+/).join('-'));
                 userPrefs.querySelector(".user-status .icon-helper").textContent = show.userStatus;
@@ -596,6 +586,20 @@ Fragment.plant('show-interface', function (params) {
             
             let getSeasons = db.seasons.where({showId: show.id}).toArray(),
                 getRelatedShows = relatedShows.length > 0 ? db.shows.where('id').anyOf(relatedShows).toArray() : null;
+    
+            // get raiting
+            getSeasons.then(seasons => {
+                console.log('gs', seasons);
+    
+                let ratings = seasons.map(e => e.rating),
+                    averageRating = ratings.reduce((a, b) => b === null ? a : a + b, 0) / ratings.filter(x => x !== null).length;
+    
+                console.log('averageRating', averageRating);
+                userPrefs.querySelector('.rating .icon-helper').textContent = isNaN(averageRating) ? "N/A" : averageRating.toFixed(2) + "";
+                if(!isNaN(averageRating)){
+                    userPrefs.querySelector('.rating .icon').classList.add('active-star');
+                }
+            })
             
             Promise.all([getSeasons, getRelatedShows]).then(result => {
                 let [seasons, relatedShows] = result;
@@ -1619,13 +1623,17 @@ let inflateAndGetObject = (data) => {
     return URL.createObjectURL(blob);
 }
 
+function revoke(){
+    URL.revokeObjectURL(this.src);
+}
+
 // main page
 function generateShowCard(show) {
     let showCard = create('div', 'show-card');
     
     showCard.dataset.showId = show.id;
     
-    showCard.appendHTML('<div class="global-poster poster"><img draggable="false" alt="" class="posterImage" loading="lazy" data-poster="show-id-' + show.id + '" src="' + (show.poster ? inflateAndGetObject(show.poster) : "images/pixel.png") + '"/></div>');
+    showCard.appendHTML('<div class="global-poster poster"><img draggable="false" alt="" class="posterImage" loading="lazy" onload="revoke.call(this)" data-poster="show-id-' + show.id + '" src="' + (show.poster ? inflateAndGetObject(show.poster) : "images/pixel.png") + '"/></div>');
     
     let cardContent = create('div');
     cardContent.appendHTML('<h3 class="show-title">' + show.name + (show.aired ? ' <span class="aired">(' + show.aired.getFullYear() + ')</span>' : '') + '</h3>')

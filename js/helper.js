@@ -2,8 +2,6 @@ Node.prototype.appendHTML = function (html) {
     this.insertAdjacentHTML('beforeend', html);
 }
 
-window.structuredClone = window.structuredClone || {};
-
 function appendOrdinalSuffix(num) {
     console.log('num', num);
     if (num >= 10 && num <= 20) {

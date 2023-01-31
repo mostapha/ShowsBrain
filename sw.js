@@ -1,5 +1,5 @@
 
-const cacheName = "brain-cache-v11";
+const cacheName = "brain-cache-v12";
 
 let appShellFiles = [
     // html
